@@ -1,5 +1,6 @@
 // Ascesa — motore di gioco (nessun accesso al DOM: gira anche in node per i test)
 import { RES, JOBS, BUILDINGS, TECHS, ERAS } from './data.js';
+import { runEvents } from './events.js';
 
 export const SAVE_KEY = 'ascesa_save_v1';
 export const LEGACY_KEY = 'ascesa_legacy_v1';
@@ -262,6 +263,7 @@ export function tick(s, dt, opts = {}) {
   s.pollution = clamp(s.pollution + (r.pol - 0.01) * dt, 0, 100);
   s.aiRisk = clamp(s.aiRisk + r.ai * dt, 0, 100);
   s.temp = s.temp.filter(e => e.until > s.t);
+  runEvents(s, dt, r, opts);
 }
 
 // ---------- salvataggio

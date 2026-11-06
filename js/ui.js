@@ -1,6 +1,7 @@
 // Ascesa — interfaccia
 import { RES, JOBS, BUILDINGS, TECHS, ERAS, GROUPS, DIFFICULTY } from './data.js';
 import * as G from './engine.js';
+import { EVENTS, CRISES, ENDINGS, choose, resolveCrisis } from './events.js';
 
 const $ = id => document.getElementById(id);
 let S = null, L = G.loadLegacy(), tab = 'jobs';
@@ -177,17 +178,40 @@ function renderTech(P, r) {
 }
 
 function renderRight(r) {
+  list($('crises'), S.crises.map(c => {
+    const C = CRISES[c.id], cost = C.cost?.(S);
+    return { k: c.id, cls: 'crisis', html: `<b>🚨 ${C.name}</b><span class="d">${C.text}</span><span class="timer ${c.left < 60 ? 'blink' : ''}">${time(Math.max(0, c.left))}</span>
+      ${cost ? `<div class="cost">${costHTML(cost, r)}</div><button data-act="crisis:${c.id}" ${G.canAfford(S, cost) ? '' : 'disabled'}>Affronta la crisi</button>` : ''}` };
+  }));
   list($('effects'), S.temp.length ? S.temp.map(e => ({ k: e.id + e.until, cls: 'e ' + (e.bad ? 'bad' : 'good'), html: `<span>${e.name}</span><span>${Math.ceil(e.until - S.t)}s</span>` }))
     : [{ k: 'none', cls: 'empty', html: 'Nessun effetto temporaneo.' }]);
   list($('log'), S.log.slice(0, 80).map((l, i) => ({ k: S.log.length - i, cls: l.type, html: `<time>${time(l.t)}</time>${l.msg}` })));
 }
 
 // ---------- modali
-function modal(html) { $('modal-box').innerHTML = html; $('modal').hidden = false; }
-function closeModal() { $('modal').hidden = true; }
+function modal(html, k = '') { $('modal-box').innerHTML = html; $('modal').hidden = false; $('modal').dataset.k = k; }
+function closeModal() { $('modal').hidden = true; $('modal').dataset.k = ''; }
+
+function statsHTML() {
+  const st = S.stats;
+  return `<div class="stats"><span>Era raggiunta</span><b>${ERAS[S.era].name}</b><span>Tempo di gioco</span><b>${time(S.t)}</b>
+    <span>Popolazione massima</span><b>${fmt(st.maxPop)}</b><span>Tecnologie scoperte</span><b>${Object.keys(S.techs).length}</b>
+    <span>Razzie respinte / subite</span><b>${st.raidsWon} / ${st.raidsLost}</b><span>Eventi vissuti</span><b>${st.events}</b>
+    <span>Morti totali</span><b>${fmt(st.died)}</b><span>Click</span><b>${fmt(st.clicks)}</b></div>`;
+}
+function overModal() {
+  const e = ENDINGS[S.over.id];
+  modal(`<h2>${e.icon} ${e.title}</h2><p>${e.text}</p>${statsHTML()}<div class="actions"><button data-act="newgame">Ricomincia da capo</button></div>`, 'over');
+}
 
 function checkModals() {
   if (!$('modal').hidden) return;
+  if (S.over) return overModal();
+  if (S.choice) {
+    const e = EVENTS[S.choice.id];
+    modal(`<h2>${e.title}</h2><p>${e.text}</p><p class="d">Il tempo è fermo finché non decidi.</p><div class="actions">${e.options.map((o, i) => `<button data-act="choose:${i}">${o.label}<small>${o.desc}</small></button>`).join('')}</div>`);
+    return;
+  }
   if (S.eraUp) {
     const e = S.eraUp; S.eraUp = null;
     modal(`<h2>🌅 ${ERAS[e].name}</h2><p>${TECHS['era' + e]?.desc || ''}</p><p>Nuove tecnologie, edifici e pericoli ti attendono. Controlla la scheda Ricerca.</p><div class="actions"><button data-act="close">Avanti</button></div>`);
@@ -224,6 +248,8 @@ function act(a, ev) {
   if (k === 'buy') G.buy(S, x, ev?.shiftKey ? 10 : 1);
   if (k === 'tech') G.research(S, x);
   if (k === 'close') closeModal();
+  if (k === 'choose') { choose(S, +x, G.calc(S)); closeModal(); }
+  if (k === 'crisis') resolveCrisis(S, x, G.calc(S));
   if (k === 'save') { G.save(S); G.log(S, '💾 Partita salvata.'); }
   if (k === 'newgame') newGameModal();
   if (k === 'start') { S = G.newState(x, L.points); G.log(S, '🔥 Una piccola tribù si raduna attorno al fuoco. Assegna i lavori e sopravvivi!', 'era'); G.save(S); closeModal(); }
