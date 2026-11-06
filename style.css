@@ -47,7 +47,7 @@ aside { display: flex; flex-direction: column; gap: 14px; }
 .res .bar i { display: block; height: 100%; background: var(--accent); }
 .res .bar i.full { background: var(--warn); }
 .rate { font-size: 11px; color: var(--muted); grid-column: 2 / 4; display: flex; justify-content: space-between; }
-.pos { color: var(--good); } .neg { color: var(--bad); }
+.pos { color: var(--good); } .neg { color: var(--bad); } .wasted { color: var(--warn); }
 
 .meter { margin-bottom: 9px; }
 .meter .top { display: flex; justify-content: space-between; font-size: 13px; }

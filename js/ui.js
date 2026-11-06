@@ -84,7 +84,7 @@ function render() {
   list($('resources'), Object.keys(RES).filter(k => S.seen[k]).map(k => {
     const cap = r.caps[k], pct = cap === Infinity ? 0 : Math.min(100, S.res[k] / cap * 100), n = r.net[k];
     return { k, cls: 'res', html: `<span>${RES[k].icon}</span><span>${RES[k].name}</span><span class="amt">${fmt(S.res[k])}${cap === Infinity ? '' : ' / ' + fmt(cap)}</span>
-      <span class="rate"><span class="${n > 0 ? 'pos' : n < 0 ? 'neg' : ''}">${sign(n)}/s</span>${k === 'food' ? `<span>consumo ${fmt(r.cons.food)}/s</span>` : ''}</span>
+      <span class="rate">${pct >= 99.9 && n > 0 ? `<span class="wasted" title="Deposito pieno: questa produzione va persa. Sposta i lavoratori o costruisci depositi.">pieno · ${sign(n)}/s sprecati</span>` : `<span class="${n > 0 ? 'pos' : n < 0 ? 'neg' : ''}">${sign(n)}/s</span>`}${k === 'food' ? `<span>consumo ${fmt(r.cons.food)}/s</span>` : ''}</span>
       ${cap === Infinity ? '' : `<div class="bar"><i class="${pct >= 99.9 ? 'full' : ''}" style="width:${pct}%"></i></div>`}` };
   }));
 

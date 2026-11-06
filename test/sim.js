@@ -1,5 +1,7 @@
 // Controllo dati + bot greedy che gioca una partita intera. Uso: node test/sim.js [partite] [difficoltà]
+// SAVE=file.txt riparte da un salvataggio esportato dal gioco (📤 Esporta).
 import assert from 'node:assert';
+import fs from 'node:fs';
 import { RES, JOBS, BUILDINGS, TECHS, ACHIEVEMENTS } from '../js/data.js';
 import * as G from '../js/engine.js';
 import { CRISES, EVENTS, choose, resolveCrisis, threat } from '../js/events.js';
@@ -65,7 +67,8 @@ function shop(s) {
 }
 
 function play(diff, seed) {
-  const s = G.newState(diff), eras = {}, wait = {};
+  const raw = process.env.SAVE && decodeURIComponent(escape(atob(fs.readFileSync(process.env.SAVE, 'utf8').trim())));
+  const s = raw ? G.load({ getItem: () => raw }) : G.newState(diff), eras = {}, wait = {};
   let ch = 0;
   for (let t = 0; t < 10 * 3600 && !s.over && !s.won; t++) {
     if (s.choice) { choose(s, (ch++ + seed) % EVENTS[s.choice.id].options.length, G.calc(s)); continue; }
