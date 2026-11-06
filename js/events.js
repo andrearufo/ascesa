@@ -42,8 +42,8 @@ export function gameOver(s, id) {
 }
 
 // ---------- razzie
-const RAID = [0, 6, 40, 250, 1500, 10000, 80000, 600000, 5e6];
-export const threat = s => Math.round(RAID[s.era] * DIFFICULTY[s.difficulty].raid * (1 + (s.t - s.eraStart) / 1800));
+const RAID = [0, 5, 25, 120, 350, 2500, 20000, 150000, 1.2e6];
+export const threat = s => Math.round(RAID[s.era] * DIFFICULTY[s.difficulty].raid * (1 + Math.min(0.5, (s.t - s.eraStart) / 4800)));
 
 function raid(s, r) {
   const names = ['Una tribù rivale', 'Predoni nomadi', 'Un esercito invasore', 'Un regno nemico', 'Una potenza straniera', 'Una superpotenza ostile', 'Una coalizione di stati', 'Uno sciame di droni ostili'];
@@ -57,9 +57,9 @@ function raid(s, r) {
     log(s, `⚔️ ${who} attacca (forza ${Math.round(atk)}) ma viene respinto dalla tua difesa (${Math.round(r.def)})! Bottino conquistato.`, 'good');
   } else {
     const ratio = 1 - r.def / atk;
-    lose(s, ratio * 0.35);
-    const k = killPop(s, Math.ceil(s.pop * ratio * 0.12 * sev(s)));
-    const d = destroy(s, housingIds, Math.ceil(ratio * 2));
+    lose(s, ratio * 0.25);
+    const k = killPop(s, Math.ceil(s.pop * ratio * 0.1 * sev(s)));
+    const d = ratio > 0.5 ? destroy(s, housingIds, 1) : 0;
     s.stats.raidsLost++;
     addTemp(s, 'defeat', '💔 Sconfitta militare', 120, { stab: -10 }, true);
     log(s, `⚔️ ${who} ti attacca (forza ${Math.round(atk)} contro difesa ${Math.round(r.def)})! ${k} morti, ${d} abitazioni distrutte, risorse saccheggiate.`, 'bad');
@@ -168,17 +168,18 @@ export const CRISES = {
   great_war: { era: 5, time: 420, name: 'La Grande Guerra', text: 'Le potenze mondiali entrano in guerra. Raggiungi 40K di difesa o finanzia lo sforzo bellico.',
     cost: s => ({ metal: 300000, gold: 150000 }), auto: (s, r) => r.def >= 40000 && '🎖️ Il tuo esercito vince la Grande Guerra!',
     fail: s => { lose(s, 0.4); destroy(s, Object.keys(BUILDINGS).filter(id => !BUILDINGS[id].mega), 8); addTemp(s, 'gw', '🪖 Dopoguerra', 300, { stab: -20 }, true); return `🪖 La guerra devasta la nazione: ${killPop(s, pct(s, 0.25))} morti.`; } },
-  missile_crisis: { era: 6, time: 420, name: 'Crisi dei missili', text: "Le superpotenze sono sull'orlo della guerra nucleare. Solo una diplomazia costosa può evitarla.",
-    cost: s => ({ knowledge: s.techs.diplomacy ? 6e6 : 1.2e7, gold: s.techs.diplomacy ? 2e6 : 4e6 }),
+  missile_crisis: { era: 6, time: 600, name: 'Crisi dei missili', text: "Le superpotenze sono sull'orlo della guerra nucleare. Solo una diplomazia costosa può evitarla.",
+    cost: s => ({ knowledge: s.techs.diplomacy ? 3e6 : 6e6, gold: s.techs.diplomacy ? 1.5e5 : 3e5 }),
     fail: s => { gameOver(s, 'nuclear'); } },
   pandemic: { era: 7, time: 420, name: 'Pandemia globale', text: 'Un nuovo virus si diffonde in tutto il pianeta. Serve un vaccino.',
-    cost: s => ({ knowledge: 1.5e8, gold: 3e7 }),
+    cost: s => ({ knowledge: 4e8, gold: 3e7 }),
     fail: s => { addTemp(s, 'pan', '😷 Lockdown', 300, { rm: { all: 0.6 }, stab: -15 }, true); return `😷 La pandemia uccide ${killPop(s, pct(s, 0.3))} persone.`; } },
   rogue_ai: { era: 7, time: 240, cond: s => s.aiRisk >= 80, repeat: true, name: 'IA fuori controllo', text: 'Un sistema autonomo sta sfuggendo a ogni controllo. Contienilo prima che sia troppo tardi!',
-    cost: s => ({ knowledge: s.era >= 8 ? 2e9 : 2e8 }), resolve: s => { s.aiRisk = Math.max(0, s.aiRisk - 50); },
+    cost: s => ({ knowledge: s.era >= 8 ? 5e9 : 5e8 }), resolve: s => { s.aiRisk = Math.max(0, s.aiRisk - 50); },
     fail: s => { gameOver(s, 'ai'); } },
-  asteroid: { era: 8, time: 900, name: 'Asteroide in rotta di collisione', text: 'Un asteroide di 10 km colpirà il pianeta. Ricerca la Difesa planetaria e costruisci lo Scudo planetario!',
+  asteroid: { era: 8, time: 1500, delay: 1500, name: 'Asteroide in rotta di collisione', text: 'Un asteroide di 10 km colpirà il pianeta. Ricerca la Difesa planetaria e costruisci lo Scudo planetario!',
     auto: s => s.buildings.planet_shield > 0 && "🛡️ Lo Scudo planetario disintegra l'asteroide!",
+    need: 'planet_shield',
     fail: s => { gameOver(s, 'asteroid'); } },
 };
 
@@ -191,6 +192,7 @@ export function resolveCrisis(s, id, r) {
 function endCrisis(s, id, msg, r) {
   s.crises = s.crises.filter(x => x.id !== id);
   CRISES[id].resolve?.(s, r);
+  s.stats.crisesWon++;
   log(s, msg, 'good');
 }
 
@@ -205,7 +207,7 @@ export function runEvents(s, dt, r, opts) {
     if (!s.zeroStabT) log(s, '🔥 La stabilità è a zero: rivolta! Hai 30 secondi per rimediare.', 'bad');
     s.zeroStabT += dt;
     if (s.zeroStabT >= 30) return gameOver(s, 'revolt');
-  } else s.zeroStabT = 0;
+  } else if (s.zeroStabT) { s.zeroStabT = 0; s.stats.revoltSurvived++; }
   if (s.pollution >= 100) return gameOver(s, 'climate');
   if (s.aiRisk >= 100) return gameOver(s, 'ai');
   for (const [lvl, msg] of [[50, '🏭 Inquinamento al 50%: i disastri climatici diventano frequenti.'], [75, "🏭 Inquinamento al 75%! Il collasso climatico è vicino."], [90, '🚨 Inquinamento al 90%! Agisci subito!']]) {
@@ -228,7 +230,7 @@ export function runEvents(s, dt, r, opts) {
   }
   for (const [id, C] of Object.entries(CRISES)) {
     if (s.era < C.era || s.crises.some(c => c.id === id) || (s.crisesDone[id] && !C.repeat)) continue;
-    const start = C.cond ? C.cond(s) : s.t - s.eraStart > 300 && Math.random() < dt / 400;
+    const start = C.cond ? C.cond(s) : s.t - s.eraStart > (C.delay || 300) && Math.random() < dt / 400;
     if (start) {
       s.crisesDone[id] = 1;
       s.crises.push({ id, left: C.time });

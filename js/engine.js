@@ -1,5 +1,5 @@
 // Ascesa — motore di gioco (nessun accesso al DOM: gira anche in node per i test)
-import { RES, JOBS, BUILDINGS, TECHS, ERAS } from './data.js';
+import { RES, JOBS, BUILDINGS, TECHS, ERAS, ACHIEVEMENTS, DIFFICULTY } from './data.js';
 import { runEvents } from './events.js';
 
 export const SAVE_KEY = 'ascesa_save_v1';
@@ -18,7 +18,7 @@ export function newState(difficulty = 'normal', legacy = 0) {
     buildings: Object.fromEntries(keys(BUILDINGS).map(b => [b, 0])),
     techs: {}, stability: 60, pollution: 0, aiRisk: 0, zeroStabT: 0,
     temp: [], crises: [], crisesDone: {}, nextEvent: 150, choice: null,
-    log: [], stats: { clicks: 0, raidsWon: 0, raidsLost: 0, events: 0, maxPop: 3, died: 0 },
+    log: [], stats: { clicks: 0, raidsWon: 0, raidsLost: 0, events: 0, maxPop: 3, died: 0, crisesWon: 0, revoltSurvived: 0 }, hist: [],
     ach: {}, clickTarget: 'food', over: null, won: null, eraUp: null,
     seen: { food: 1, wood: 1, knowledge: 1 }, created: Date.now(), last: Date.now(),
   };
@@ -46,7 +46,7 @@ export function mods(s) {
   };
   for (const id in s.techs) apply(TECHS[id].fx || {});
   for (const e of s.temp) apply(e.fx || {});
-  m.rm.all = (m.rm.all ?? 1) * (1 + 0.1 * s.legacy) * (1 + 0.02 * keys(s.ach).length);
+  m.rm.all = (m.rm.all ?? 1) * DIFFICULTY[s.difficulty].prod * (1 + 0.03 * s.legacy) * (1 + 0.02 * keys(s.ach).length);
   return m;
 }
 
@@ -103,10 +103,11 @@ export function calc(s, m = mods(s)) {
   // stabilità: somma di fattori
   const parts = r.stabParts;
   parts.push(['Base', 50]);
-  if (bStab) parts.push(['Edifici', bStab]);
+  if (bStab) parts.push(['Edifici', bStab > 0 ? 35 * (1 - Math.exp(-bStab / 35)) : bStab]); // rendimenti decrescenti
   if (pStab) parts.push(['Sacerdoti', Math.min(30, pStab)]);
   if (m.stab) parts.push(['Tecnologie ed eventi', m.stab]);
   if (s.pop > 10) parts.push(['Dimensione della civiltà', -Math.log10(s.pop / 10) * 6]);
+  if (s.era > 1) parts.push(['Complessità sociale', -(s.era - 1) * 4]);
   if (idle > 0 && s.pop > 5) parts.push(['Disoccupazione', -Math.min(20, (idle / s.pop) * 40)]);
   if (s.res.food <= 0 && r.net.food < 0) parts.push(['Carestia', -30]);
   if (s.pop >= r.housing && s.pop > 5) parts.push(['Sovraffollamento', -3]);
@@ -260,10 +261,38 @@ export function tick(s, dt, opts = {}) {
   s.stats.maxPop = Math.max(s.stats.maxPop, s.pop);
   fixJobs(s, r);
   s.stability = clamp(s.stability + (r.stabTarget - s.stability) * Math.min(1, dt * 0.05), 0, 100);
-  s.pollution = clamp(s.pollution + (r.pol - 0.01) * dt, 0, 100);
+  s.pollution = clamp(s.pollution + (r.pol - 0.02) * dt, 0, 100);
   s.aiRisk = clamp(s.aiRisk + r.ai * dt, 0, 100);
   s.temp = s.temp.filter(e => e.until > s.t);
   runEvents(s, dt, r, opts);
+  for (const id in ACHIEVEMENTS) if (!s.ach[id] && ACHIEVEMENTS[id].cond(s, r)) {
+    s.ach[id] = s.t;
+    log(s, `🏅 Traguardo: ${ACHIEVEMENTS[id].name} (+2% produzione)`, 'good');
+  }
+  if (s.t - (s.hist.at(-1)?.[0] ?? -99) >= 30) {
+    s.hist.push([Math.round(s.t), s.pop, Math.round(r.prod.knowledge)]);
+    if (s.hist.length > 400) s.hist = s.hist.filter((_, i) => i % 2);
+  }
+}
+
+// progressi mentre il gioco era chiuso (max 4 ore, senza eventi)
+export function offline(s) {
+  const sec = Math.min(4 * 3600, (Date.now() - s.last) / 1000);
+  if (sec < 60 || s.over || s.won || s.choice) return null;
+  const before = { ...s.res }, pop = s.pop;
+  for (let t = sec; t > 0; t -= 10) tick(s, Math.min(10, t), { offline: true });
+  return { sec, gain: Object.fromEntries(keys(RES).map(k => [k, s.res[k] - before[k]])), pop: s.pop - pop };
+}
+
+// punti eredità a fine partita
+export function endRun(s, L) {
+  if (s.legacyAwarded) return s.legacyPts;
+  s.legacyAwarded = true;
+  const k = { easy: 0.5, normal: 1, hard: 1.5 }[s.difficulty];
+  const pts = Math.max(1, Math.round(((s.era - 1) * 2 + (s.won ? 15 : 0) + Object.keys(s.ach).length * 0.25) * k));
+  L.points += pts; L.runs++; L.best = Math.max(L.best, s.era);
+  if (s.won) { L.wins++; L.endings[s.won.id] = 1; }
+  return (s.legacyPts = pts);
 }
 
 // ---------- salvataggio

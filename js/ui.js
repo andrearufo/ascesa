@@ -1,5 +1,5 @@
 // Ascesa — interfaccia
-import { RES, JOBS, BUILDINGS, TECHS, ERAS, GROUPS, DIFFICULTY } from './data.js';
+import { RES, JOBS, BUILDINGS, TECHS, ERAS, GROUPS, DIFFICULTY, ACHIEVEMENTS, VICTORIES } from './data.js';
 import * as G from './engine.js';
 import { initScene } from './scene.js';
 import { EVENTS, CRISES, ENDINGS, choose, resolveCrisis } from './events.js';
@@ -98,7 +98,7 @@ function render() {
     r.stabParts.map(p => `${p[0]}: ${sign(p[1])}`).join('\n'));
   if (G.has(S, 'spears') || r.def > 0) meter('def', '🛡️ Difesa', fmt(r.def), 0, '', S.threat ? `minaccia stimata: ~${fmt(S.threat)}` : '');
   if (r.energyDem || r.energyProd) meter('en', '⚡ Energia', `${fmt(r.energyProd)} / ${fmt(r.energyDem)}`, Math.min(100, r.eff * 100), r.eff < 1 ? 'var(--bad)' : 'var(--warn)', r.eff < 1 ? `<b class="neg blink">Blackout: edifici al ${Math.round(r.eff * 100)}%</b>` : 'produzione / consumo');
-  if (S.era >= 5 || S.pollution > 0) meter('pol', '🏭 Inquinamento', `${S.pollution.toFixed(1)}%`, S.pollution, S.pollution > 75 ? 'var(--bad)' : '#a0826d', `${sign((r.pol - 0.01) * 60)}/min · al 100% collasso climatico`);
+  if (S.era >= 5 || S.pollution > 0) meter('pol', '🏭 Inquinamento', `${S.pollution.toFixed(1)}%`, S.pollution, S.pollution > 75 ? 'var(--bad)' : '#a0826d', `${sign((r.pol - 0.02) * 60)}/min · al 100% collasso climatico`);
   if (S.era >= 7 || S.aiRisk > 0) meter('ai', '🤖 Rischio IA', `${S.aiRisk.toFixed(1)}%`, S.aiRisk, S.aiRisk > 75 ? 'var(--bad)' : '#bb6bd9', `${sign(r.ai * 60)}/min · al 100% le IA prendono il potere`);
   list($('meters'), meters);
 
@@ -109,7 +109,7 @@ function render() {
 
 function renderTabs(r) {
   const nTech = Object.keys(TECHS).filter(id => G.techAvailable(S, id) && G.canAfford(S, TECHS[id].cost)).length;
-  const tabs = [['jobs', '👥 Lavori'], ['build', '🏗️ Edifici'], ['tech', '🔬 Ricerca' + (nTech ? `<span class="badge">${nTech}</span>` : '')]];
+  const tabs = [['jobs', '👥 Lavori'], ['build', '🏗️ Edifici'], ['tech', '🔬 Ricerca' + (nTech ? `<span class="badge">${nTech}</span>` : '')], ['stats', '📊 Cronologia']];
   list($('tabs'), tabs.map(([k, l]) => ({ k, html: `<button data-act="tab:${k}" class="${tab === k ? 'on' : ''}">${l}</button>` })));
   const P = $('panel');
   if (P._tab !== tab) { P._tab = tab; P.innerHTML = ''; }
@@ -117,6 +117,29 @@ function renderTabs(r) {
   if (tab === 'jobs') renderJobs(P, r);
   if (tab === 'build') renderBuild(P, r);
   if (tab === 'tech') renderTech(P, r);
+  if (tab === 'stats') renderStats(P, r);
+}
+
+function chart() {
+  const h = S.hist, w = 600, ht = 120;
+  if (h.length < 2) return '<p class="empty">Il grafico apparirà tra qualche minuto.</p>';
+  const T = h.at(-1)[0] || 1, line = (i, c) => {
+    const max = Math.log10(Math.max(...h.map(p => p[i])) + 1) || 1;
+    return `<polyline fill="none" stroke="${c}" stroke-width="2" points="${h.map(p => `${p[0] / T * w},${ht - Math.log10(p[i] + 1) / max * (ht - 8) - 4}`).join(' ')}"/>`;
+  };
+  return `<svg viewBox="0 0 ${w} ${ht}" style="width:100%;height:140px;background:var(--panel2);border-radius:8px">${line(1, 'var(--info)')}${line(2, 'var(--accent)')}</svg>
+    <small class="d"><span style="color:var(--info)">━ popolazione</span> · <span style="color:var(--accent)">━ conoscenza/s</span> (scala logaritmica)</small>`;
+}
+
+function renderStats(P, r) {
+  section(P, 'chart', '📈 Andamento della civiltà', [{ k: 'c', cls: 'item', html: chart() }], '');
+  section(P, 'st', '📊 Statistiche', [{ k: 's', cls: 'item', html: statsHTML() }], '');
+  section(P, 'leg', '🏺 Eredità', [{ k: 'l', cls: 'item', html: `<div class="stats"><span>Punti eredità</span><b>${L.points} (+${L.points * 3}% produzione nelle nuove partite)</b>
+    <span>Partite giocate / vinte</span><b>${L.runs} / ${L.wins}</b><span>Era migliore</span><b>${L.best ? ERAS[L.best].name : '—'}</b>
+    <span>Finali scoperti</span><b>${Object.entries(VICTORIES).map(([k, v]) => L.endings[k] ? v.icon + ' ' + v.title : '❔').join(' · ')}</b></div>
+    <p class="d">Alla fine di ogni partita (vittoria o sconfitta) guadagni punti eredità in base all'era raggiunta, ai traguardi e alla difficoltà.</p>` }], '');
+  const n = Object.keys(S.ach).length;
+  section(P, 'ach', `🏅 Traguardi (${n}/${Object.keys(ACHIEVEMENTS).length}) · +${n * 2}% produzione`, Object.entries(ACHIEVEMENTS).map(([k, a]) => ({ k, cls: 'item ' + (S.ach[k] ? 'ok' : 'done'), html: `<div class="t"><span>${S.ach[k] ? '🏅' : '🔒'} ${a.name}</span></div><div class="d">${a.desc}</div>` })));
 }
 
 function section(P, key, title, items, gridCls = 'grid') {
@@ -182,7 +205,8 @@ function renderRight(r) {
   list($('crises'), S.crises.map(c => {
     const C = CRISES[c.id], cost = C.cost?.(S);
     return { k: c.id, cls: 'crisis', html: `<b>🚨 ${C.name}</b><span class="d">${C.text}</span><span class="timer ${c.left < 60 ? 'blink' : ''}">${time(Math.max(0, c.left))}</span>
-      ${cost ? `<div class="cost">${costHTML(cost, r)}</div><button data-act="crisis:${c.id}" ${G.canAfford(S, cost) ? '' : 'disabled'}>Affronta la crisi</button>` : ''}` };
+      ${cost ? `<div class="cost">${costHTML(cost, r)}</div><button data-act="crisis:${c.id}" ${G.canAfford(S, cost) ? '' : 'disabled'}>Affronta la crisi</button>` : ''}
+      ${C.need ? `<span class="d">Serve: ${BUILDINGS[C.need].icon} ${BUILDINGS[C.need].name} ${G.has(S, BUILDINGS[C.need].req) ? '' : `(ricerca prima ${TECHS[BUILDINGS[C.need].req].name})`}</span><div class="cost">${costHTML(G.bCost(S, C.need), r)}</div>` : ''}` };
   }));
   list($('effects'), S.temp.length ? S.temp.map(e => ({ k: e.id + e.until, cls: 'e ' + (e.bad ? 'bad' : 'good'), html: `<span>${e.name}</span><span>${Math.ceil(e.until - S.t)}s</span>` }))
     : [{ k: 'none', cls: 'empty', html: 'Nessun effetto temporaneo.' }]);
@@ -200,14 +224,18 @@ function statsHTML() {
     <span>Razzie respinte / subite</span><b>${st.raidsWon} / ${st.raidsLost}</b><span>Eventi vissuti</span><b>${st.events}</b>
     <span>Morti totali</span><b>${fmt(st.died)}</b><span>Click</span><b>${fmt(st.clicks)}</b></div>`;
 }
-function overModal() {
-  const e = ENDINGS[S.over.id];
-  modal(`<h2>${e.icon} ${e.title}</h2><p>${e.text}</p>${statsHTML()}<div class="actions"><button data-act="newgame">Ricomincia da capo</button></div>`, 'over');
+function endModal(e, won) {
+  const pts = G.endRun(S, L);
+  G.saveLegacy(L); G.save(S);
+  modal(`<h2>${e.icon} ${e.title}</h2><p>${e.text}</p>${won ? `<p><b>🏆 Hai vinto in ${time(S.t)}!</b></p>` : ''}${statsHTML()}
+    <p>🏺 Guadagni <b>${pts}</b> punti eredità (totale ${L.points}): la prossima civiltà partirà con <b>+${L.points * 3}%</b> di produzione.</p>
+    <div class="actions"><button data-act="newgame">Nuova partita</button></div>`, 'over');
 }
 
 function checkModals() {
   if (!$('modal').hidden) return;
-  if (S.over) return overModal();
+  if (S.over) return endModal(ENDINGS[S.over.id], false);
+  if (S.won) return endModal(VICTORIES[S.won.id], true);
   if (S.choice) {
     const e = EVENTS[S.choice.id];
     modal(`<h2>${e.title}</h2><p>${e.text}</p><p class="d">Il tempo è fermo finché non decidi.</p><div class="actions">${e.options.map((o, i) => `<button data-act="choose:${i}">${o.label}<small>${o.desc}</small></button>`).join('')}</div>`);
@@ -223,10 +251,10 @@ function newGameModal() {
   modal(`<h2>Ascesa</h2>
     <p>Guida una piccola tribù dalla <b>preistoria</b> fino a un futuro <b>iper-tecnologico</b>. Raccogli risorse, assegna i lavori, costruisci, ricerca e compi scelte che cambieranno il destino della tua civiltà.</p>
     <p>Carestie, razzie, epidemie, rivolte, inquinamento, guerre nucleari e intelligenze artificiali ribelli possono distruggere tutto. Completa uno dei <b>megaprogetti</b> finali per vincere.</p>
-    ${L.points ? `<p>🏺 Eredità delle civiltà passate: <b>${L.points}</b> punti → <b>+${L.points * 10}%</b> a tutta la produzione.</p>` : ''}
+    ${L.points ? `<p>🏺 Eredità delle civiltà passate: <b>${L.points}</b> punti → <b>+${L.points * 3}%</b> a tutta la produzione.</p>` : ''}
     <h3>Scegli la difficoltà</h3>
-    <div class="actions">${Object.entries(DIFFICULTY).map(([k, d]) => `<button data-act="start:${k}">${d.name}<small>eventi ${mul(d.events)} · gravità ${mul(d.severity)}</small></button>`).join('')}</div>
-    ${S && !S.over && !S.won ? '<div class="actions"><button data-act="close">Annulla</button></div>' : ''}`);
+    <div class="actions">${Object.entries(DIFFICULTY).map(([k, d]) => `<button data-act="start:${k}">${d.name}<small>produzione ${mul(d.prod)} · eventi ${mul(d.events)} · gravità ${mul(d.severity)}</small></button>`).join('')}</div>
+    ${S && !S.over && !S.won ? '<div class="actions"><button data-act="close">Annulla</button></div>' : ''}`, 'new');
 }
 
 // ---------- azioni
@@ -279,6 +307,12 @@ document.addEventListener('keyup', e => { if (e.code === 'Space') $('clicker').c
 // ---------- ciclo principale
 S = G.load();
 if (!S) newGameModal();
+else {
+  const off = G.offline(S);
+  if (off) modal(`<h2>🌙 Bentornato</h2><p>Sei stato via ${time(off.sec)}. Nel frattempo la tua civiltà ha prodotto:</p>
+    <div class="stats">${Object.entries(off.gain).filter(([, v]) => Math.abs(v) >= 1).map(([k, v]) => `<span>${RES[k].icon} ${RES[k].name}</span><b>${sign(v)}</b>`).join('')}<span>👥 Popolazione</span><b>${sign(off.pop)}</b></div>
+    <p class="d">Durante l'assenza non avvengono eventi e il tempo delle crisi è sospeso (massimo 4 ore).</p><div class="actions"><button data-act="close">Continua</button></div>`);
+}
 initScene($('scene'), () => S);
 globalThis.ascesa = { get state() { return S; } }; // accesso da console per debug
 let last = performance.now();

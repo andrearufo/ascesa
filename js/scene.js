@@ -140,7 +140,7 @@ function drawSky(s, t) {
   ctx.globalAlpha = 1;
   // asteroide in arrivo
   const ast = s.crises.find(c => c.id === 'asteroid');
-  if (ast) { const p = 1 - ast.left / 900, x = W * 0.2 + p * W * 0.3, y = 30 + p * 60, r = 4 + p * 26; ctx.globalAlpha = 0.5; tri(x, y - r * 0.6, x - r * 5, y - r * 3, x, y + r * 0.6, '#ff9f1c'); ctx.globalAlpha = 1; circ(x, y, r, '#6d4c41'); }
+  if (ast) { const p = 1 - ast.left / 1500, x = W * 0.2 + p * W * 0.3, y = 30 + p * 60, r = 4 + p * 26; ctx.globalAlpha = 0.5; tri(x, y - r * 0.6, x - r * 5, y - r * 3, x, y + r * 0.6, '#ff9f1c'); ctx.globalAlpha = 1; circ(x, y, r, '#6d4c41'); }
 }
 
 // ---------- edifici, persone, meteo
