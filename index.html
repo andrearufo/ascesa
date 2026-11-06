@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ascesa — dalla pietra alle stelle</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="brand">ASCESA</div>
+    <div class="era"><b id="era-name"></b><span id="year"></span></div>
+    <div id="timeline"></div>
+    <nav>
+      <button data-act="save">💾 Salva</button>
+      <button data-act="export">📤 Esporta</button>
+      <button data-act="import">📥 Importa</button>
+      <button data-act="newgame">🔄 Nuova partita</button>
+    </nav>
+  </header>
+
+  <main>
+    <aside id="left">
+      <div class="card">
+        <button id="clicker" data-act="click"><span id="click-label"></span><small id="click-value"></small></button>
+        <div id="targets" class="chips"></div>
+        <p class="hint">Suggerimento: premi <kbd>Spazio</kbd> per cliccare.</p>
+      </div>
+      <div class="card"><h3>Risorse</h3><div id="resources"></div></div>
+      <div class="card"><h3>Civiltà</h3><div id="meters"></div></div>
+    </aside>
+
+    <section id="center">
+      <div class="tabs" id="tabs"></div>
+      <div id="panel"></div>
+    </section>
+
+    <aside id="right">
+      <div id="crises"></div>
+      <div class="card"><h3>Effetti attivi</h3><div id="effects"></div></div>
+      <div class="card grow"><h3>Cronaca</h3><div id="log"></div></div>
+    </aside>
+  </main>
+
+  <div id="modal" hidden><div class="box" id="modal-box"></div></div>
+  <script type="module" src="js/ui.js"></script>
+</body>
+</html>
