@@ -1,6 +1,7 @@
 // Ascesa — interfaccia
 import { RES, JOBS, BUILDINGS, TECHS, ERAS, GROUPS, DIFFICULTY } from './data.js';
 import * as G from './engine.js';
+import { initScene } from './scene.js';
 import { EVENTS, CRISES, ENDINGS, choose, resolveCrisis } from './events.js';
 
 const $ = id => document.getElementById(id);
@@ -278,6 +279,8 @@ document.addEventListener('keyup', e => { if (e.code === 'Space') $('clicker').c
 // ---------- ciclo principale
 S = G.load();
 if (!S) newGameModal();
+initScene($('scene'), () => S);
+globalThis.ascesa = { get state() { return S; } }; // accesso da console per debug
 let last = performance.now();
 setInterval(() => {
   const now = performance.now();

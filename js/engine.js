@@ -14,7 +14,7 @@ export function newState(difficulty = 'normal', legacy = 0) {
     v: 1, t: 0, difficulty, era: 1, eraStart: 0, legacy,
     res: { ...Object.fromEntries(keys(RES).map(r => [r, 0])), food: 40, wood: 10 },
     pop: 3, growthAcc: 0, starveAcc: 0,
-    jobs: Object.fromEntries(keys(JOBS).map(j => [j, 0])),
+    jobs: { ...Object.fromEntries(keys(JOBS).map(j => [j, 0])), forager: 2 },
     buildings: Object.fromEntries(keys(BUILDINGS).map(b => [b, 0])),
     techs: {}, stability: 60, pollution: 0, aiRisk: 0, zeroStabT: 0,
     temp: [], crises: [], crisesDone: {}, nextEvent: 150, choice: null,
