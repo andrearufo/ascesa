@@ -13,12 +13,12 @@ export const ERAS = [
 ];
 
 export const RES = {
-  food: { name: 'Cibo', icon: '🍖', cap: 200 },
-  wood: { name: 'Legno', icon: '🪵', cap: 150 },
-  stone: { name: 'Pietra', icon: '🪨', cap: 100 },
-  metal: { name: 'Metallo', icon: '⚙️', cap: 200 },
-  gold: { name: 'Oro', icon: '💰', cap: 100 },
-  knowledge: { name: 'Conoscenza', icon: '📜', cap: Infinity },
+  food: { name: 'Cibo', icon: '🍖', cap: 200, key: 'C' },
+  wood: { name: 'Legno', icon: '🪵', cap: 150, key: 'L' },
+  stone: { name: 'Pietra', icon: '🪨', cap: 100, key: 'P' },
+  metal: { name: 'Metallo', icon: '⚙️', cap: 200, key: 'M' },
+  gold: { name: 'Oro', icon: '💰', cap: 100, key: 'O' },
+  knowledge: { name: 'Conoscenza', icon: '📜', cap: Infinity, key: 'K' },
   exotic: { name: 'Materia esotica', icon: '✨', cap: Infinity },
 };
 

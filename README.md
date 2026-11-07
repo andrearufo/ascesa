@@ -7,7 +7,8 @@ Guida una tribù dalla preistoria fino a un futuro iper-tecnologico.
 
 ## Come si gioca
 
-- **Clicca** (o premi `Spazio`) per raccogliere la risorsa selezionata; il click cresce con la tua produzione.
+- **Clicca** per raccogliere la risorsa selezionata; il click cresce con la tua produzione.
+  Da tastiera: `Spazio` per la risorsa selezionata, oppure `C` cibo, `L` legno, `P` pietra, `M` metallo, `O` oro, `K` conoscenza. Conta una pressione alla volta: tenere premuto non raccoglie nulla.
 - **Assegna i lavori**: raccoglitori, taglialegna, cavatori, saggi, soldati… e poi contadini, minatori, studiosi, operai, scienziati, tecnici IA, ingegneri quantistici.
 - **Costruisci** alloggi, magazzini (le capacità limitano i costi raggiungibili!), centrali, laboratori.
 - **Ricerca** oltre 100 tecnologie in 8 ere e compi **8 scelte esclusive** (tribù, governo, economia, questione sociale, energia, ideologia, IA, destino).

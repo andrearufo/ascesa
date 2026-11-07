@@ -78,7 +78,7 @@ function render() {
   if (!G.clickTargets(S).includes(S.clickTarget)) S.clickTarget = 'food';
   $('click-label').textContent = CLICK[S.clickTarget];
   $('click-value').textContent = `+${fmt(G.clickValue(S, r))} ${RES[S.clickTarget].name.toLowerCase()}`;
-  list($('targets'), G.clickTargets(S).map(k => ({ k, html: `<button data-act="target:${k}" class="${S.clickTarget === k ? 'on' : ''}">${RES[k].icon} ${RES[k].name}</button>` })));
+  list($('targets'), G.clickTargets(S).map(k => ({ k, html: `<button data-act="target:${k}" class="${S.clickTarget === k ? 'on' : ''}">${RES[k].icon} ${RES[k].name} <kbd>${RES[k].key}</kbd></button>` })));
 
   // risorse
   list($('resources'), Object.keys(RES).filter(k => S.seen[k]).map(k => {
@@ -297,12 +297,16 @@ document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]');
   if (el && !el.disabled) act(el.dataset.act, e);
 });
+// Spazio = risorsa selezionata, lettera = quella risorsa. Un click per pressione: tenere premuto non conta.
 document.addEventListener('keydown', e => {
-  if (e.code === 'Space' && e.target.tagName !== 'TEXTAREA' && $('modal').hidden) {
-    e.preventDefault(); $('clicker').classList.add('pressed'); act('click');
-  }
+  if (!S || e.metaKey || e.ctrlKey || e.altKey || /INPUT|TEXTAREA/.test(e.target.tagName) || !$('modal').hidden) return;
+  const t = e.code === 'Space' ? S.clickTarget : G.clickTargets(S).find(k => 'Key' + RES[k].key === e.code);
+  if (!t) return;
+  e.preventDefault();
+  if (e.repeat) return;
+  S.clickTarget = t; $('clicker').classList.add('pressed'); act('click');
 });
-document.addEventListener('keyup', e => { if (e.code === 'Space') $('clicker').classList.remove('pressed'); });
+document.addEventListener('keyup', () => $('clicker').classList.remove('pressed'));
 
 // ---------- ciclo principale
 S = G.load();
