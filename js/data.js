@@ -22,6 +22,7 @@ export const RES = {
   exotic: { name: 'Materia esotica', icon: '✨', cap: Infinity },
 };
 
+// use (edifici): risorse consumate al secondo; se finiscono l'edificio rende in proporzione.
 // out: produzione per lavoratore al secondo. slots: i posti sono forniti dagli edifici.
 // power: i lavoratori rallentano se manca energia.
 export const JOBS = {
@@ -46,7 +47,7 @@ export const BUILDINGS = {
   // --- Era 1
   hut: { name: 'Capanna', icon: '🛖', cost: { wood: 12 }, mult: 1.12, housing: 2, sprite: 'hut' },
   stockpile: { name: 'Deposito', icon: '📦', cost: { wood: 30 }, mult: 1.2, caps: { food: 150, wood: 120, stone: 100 }, sprite: 'pile' },
-  firepit: { name: 'Focolare', icon: '🔥', req: 'fire', cost: { wood: 25, stone: 10 }, mult: 1.3, stab: 2, sprite: 'fire' },
+  firepit: { name: 'Focolare', icon: '🔥', req: 'fire', cost: { wood: 25, stone: 10 }, use: { wood: 0.1 }, mult: 1.3, stab: 2, sprite: 'fire' },
   cave_painting: { name: 'Pitture rupestri', icon: '🎨', req: 'rituals', cost: { stone: 40, wood: 20 }, mult: 1.25, prod: { knowledge: 0.25 }, stab: 1, sprite: 'rock' },
   palisade: { name: 'Palizzata', icon: '🚧', req: 'spears', cost: { wood: 60 }, mult: 1.2, def: 4, sprite: 'fence' },
   // --- Era 2
@@ -60,47 +61,47 @@ export const BUILDINGS = {
   temple: { name: 'Tempio', icon: '🏛️', req: 'priesthood', cost: { stone: 300, gold: 40 }, slots: { priest: 2 }, stab: 2, sprite: 'temple' },
   barracks: { name: 'Caserma', icon: '⚔️', req: 'bronze_weapons', cost: { stone: 200, metal: 60 }, def: 15, sprite: 'barracks' },
   walls: { name: 'Mura', icon: '🧱', req: 'fortification', cost: { stone: 600 }, mult: 1.25, def: 50, sprite: 'wall' },
-  forge: { name: 'Fucina', icon: '🔨', req: 'iron', cost: { stone: 500, metal: 150 }, mult: 1.18, prod: { metal: 1.5 }, sprite: 'forge' },
+  forge: { name: 'Fucina', icon: '🔨', req: 'iron', cost: { stone: 500, metal: 150 }, use: { wood: 1 }, mult: 1.18, prod: { metal: 1.5 }, sprite: 'forge' },
   // --- Era 3
   storehouse: { name: 'Grande magazzino', icon: '🏬', req: 'engineering', cost: { wood: 2000, stone: 2500 }, mult: 1.2, caps: { food: 4000, wood: 5000, stone: 5000, metal: 5000, gold: 1500 }, sprite: 'shed' },
   aqueduct: { name: 'Acquedotto', icon: '🌉', req: 'engineering', cost: { stone: 2500, metal: 300 }, housing: 20, stab: 1, sprite: 'aqueduct' },
   windmill: { name: 'Mulino a vento', icon: '🌬️', req: 'mills', cost: { wood: 2000, stone: 1000 }, prod: { food: 25 }, sprite: 'windmill' },
   monastery: { name: 'Monastero', icon: '⛪', req: 'theology', cost: { stone: 2000, gold: 300 }, slots: { scholar: 3 }, prod: { knowledge: 3 }, stab: 1, sprite: 'church' },
-  castle: { name: 'Castello', icon: '🏰', req: 'chivalry', cost: { stone: 6000, metal: 800, gold: 400 }, def: 300, housing: 10, sprite: 'castle' },
+  castle: { name: 'Castello', icon: '🏰', req: 'chivalry', cost: { stone: 6000, metal: 800, gold: 400 }, use: { gold: 1 }, def: 300, housing: 10, sprite: 'castle' },
   guildhall: { name: 'Sede delle corporazioni', icon: '🏦', req: 'guilds', cost: { stone: 3000, gold: 800 }, slots: { merchant: 4 }, caps: { gold: 2000 }, sprite: 'hall' },
   // --- Era 4
   townhouse: { name: 'Palazzo', icon: '🏘️', req: 'architecture', cost: { stone: 15000, wood: 8000 }, housing: 50, sprite: 'palazzo' },
   emporium: { name: 'Emporio', icon: '🏪', req: 'banking', cost: { stone: 20000, gold: 3000 }, mult: 1.2, caps: { food: 50000, wood: 50000, stone: 50000, metal: 50000, gold: 25000 }, sprite: 'shed' },
   bank: { name: 'Banca', icon: '🏦', req: 'banking', cost: { stone: 15000, gold: 5000 }, slots: { merchant: 6 }, caps: { gold: 20000 }, sprite: 'bank' },
   university: { name: 'Università', icon: '🎓', req: 'humanism', cost: { stone: 20000, gold: 4000 }, slots: { scholar: 6 }, sprite: 'university' },
-  printing_press: { name: 'Tipografia', icon: '🖨️', req: 'printing', cost: { stone: 10000, metal: 3000 }, prod: { knowledge: 30 }, sprite: 'workshop' },
-  harbor: { name: 'Porto', icon: '⚓', req: 'navigation', cost: { wood: 30000, stone: 20000 }, prod: { gold: 15, food: 30 }, sprite: 'harbor' },
-  theater: { name: 'Teatro', icon: '🎭', req: 'arts', cost: { stone: 20000, gold: 8000 }, stab: 3, mult: 1.25, sprite: 'theater' },
-  star_fort: { name: 'Fortezza a stella', icon: '🏯', req: 'gunpowder', cost: { stone: 40000, metal: 15000 }, def: 6000, sprite: 'castle' },
+  printing_press: { name: 'Tipografia', icon: '🖨️', req: 'printing', cost: { stone: 10000, metal: 3000 }, use: { wood: 5 }, prod: { knowledge: 30 }, sprite: 'workshop' },
+  harbor: { name: 'Porto', icon: '⚓', req: 'navigation', cost: { wood: 30000, stone: 20000 }, use: { wood: 10 }, prod: { gold: 15, food: 30 }, sprite: 'harbor' },
+  theater: { name: 'Teatro', icon: '🎭', req: 'arts', cost: { stone: 20000, gold: 8000 }, use: { gold: 10 }, stab: 3, mult: 1.25, sprite: 'theater' },
+  star_fort: { name: 'Fortezza a stella', icon: '🏯', req: 'gunpowder', cost: { stone: 40000, metal: 15000 }, use: { gold: 20 }, def: 6000, sprite: 'castle' },
   // --- Era 5
   tenement: { name: 'Casermone operaio', icon: '🏢', req: 'urbanization', cost: { stone: 80000, metal: 50000 }, housing: 150, stab: -0.5, sprite: 'block' },
   factory: { name: 'Fabbrica', icon: '🏭', req: 'steam', cost: { wood: 60000, metal: 40000 }, slots: { worker: 25 }, mult: 1.1, energy: -5, pol: 0.0005, sprite: 'factory' },
-  coal_plant: { name: 'Centrale a carbone', icon: '🏗️', req: 'steam', cost: { stone: 50000, metal: 30000 }, energy: 25, pol: 0.002, sprite: 'plant' },
+  coal_plant: { name: 'Centrale a carbone', icon: '🏗️', req: 'steam', cost: { stone: 50000, metal: 30000 }, use: { wood: 120 }, energy: 25, pol: 0.002, sprite: 'plant' },
   silo: { name: 'Deposito industriale', icon: '🛢️', req: 'steel', cost: { metal: 50000, wood: 50000 }, mult: 1.2, caps: { food: 1e6, wood: 1e6, stone: 1e6, metal: 1e6, gold: 5e5 }, sprite: 'tank' },
-  steel_mill: { name: 'Acciaieria', icon: '🔩', req: 'steel', cost: { metal: 120000, stone: 100000 }, prod: { metal: 400 }, energy: -10, pol: 0.0015, sprite: 'factory' },
-  railway: { name: 'Ferrovia', icon: '🚂', req: 'railways', cost: { metal: 150000, wood: 100000 }, prod: { gold: 80 }, sprite: 'rail' },
+  steel_mill: { name: 'Acciaieria', icon: '🔩', req: 'steel', cost: { metal: 120000, stone: 100000 }, use: { wood: 250 }, prod: { metal: 400 }, energy: -10, pol: 0.0015, sprite: 'factory' },
+  railway: { name: 'Ferrovia', icon: '🚂', req: 'railways', cost: { metal: 150000, wood: 100000 }, use: { wood: 60 }, prod: { gold: 80 }, sprite: 'rail' },
   institute: { name: 'Istituto di ricerca', icon: '🏫', req: 'electricity', cost: { metal: 200000, gold: 80000 }, prod: { knowledge: 500 }, energy: -10, sprite: 'university' },
-  hospital: { name: 'Ospedale', icon: '🏥', req: 'vaccination', cost: { metal: 100000, gold: 50000 }, stab: 2, sprite: 'hospital' },
+  hospital: { name: 'Ospedale', icon: '🏥', req: 'vaccination', cost: { metal: 100000, gold: 50000 }, use: { gold: 50 }, stab: 2, sprite: 'hospital' },
   park: { name: 'Parco', icon: '🌳', req: 'conservation', cost: { gold: 80000 }, pol: -0.004, stab: 1.5, sprite: 'park' },
   // --- Era 6
   apartment: { name: 'Condominio', icon: '🏬', req: 'mass_production', cost: { metal: 1e6, gold: 250000 }, housing: 400, energy: -5, sprite: 'tower' },
   logistics: { name: 'Centro logistico', icon: '📦', req: 'mass_production', cost: { metal: 1.5e6, gold: 5e5 }, mult: 1.2, caps: { food: 3e7, wood: 3e7, stone: 3e7, metal: 3e7, gold: 2e7 }, energy: -5, sprite: 'shed' },
-  oil_plant: { name: 'Centrale petrolifera', icon: '🛢️', req: 'en_fossil', cost: { metal: 1e6 }, energy: 150, pol: 0.004, sprite: 'plant' },
-  nuclear_plant: { name: 'Centrale nucleare', icon: '☢️', req: 'en_nuclear', cost: { metal: 2.5e6, gold: 1e6 }, energy: 600, pol: 0.0002, sprite: 'nuke' },
+  oil_plant: { name: 'Centrale petrolifera', icon: '🛢️', req: 'en_fossil', cost: { metal: 1e6 }, use: { gold: 150 }, energy: 150, pol: 0.004, sprite: 'plant' },
+  nuclear_plant: { name: 'Centrale nucleare', icon: '☢️', req: 'en_nuclear', cost: { metal: 2.5e6, gold: 1e6 }, use: { metal: 3000 }, energy: 600, pol: 0.0002, sprite: 'nuke' },
   solar_farm: { name: 'Parco solare', icon: '🔆', req: 'en_renew', cost: { metal: 1.5e6, gold: 750000 }, energy: 200, sprite: 'solar' },
   lab: { name: 'Laboratorio', icon: '🧪', req: 'computers', cost: { metal: 1.5e6, gold: 750000 }, slots: { scientist: 20 }, mult: 1.1, energy: -30, sprite: 'lab' },
-  airbase: { name: 'Base aerea', icon: '✈️', req: 'aviation', cost: { metal: 2e6 }, def: 2e5, energy: -20, sprite: 'airbase' },
-  mall: { name: 'Centro commerciale', icon: '🛍️', req: 'consumerism', cost: { metal: 1.5e6, gold: 500000 }, prod: { gold: 2000 }, stab: 1.5, energy: -25, pol: 0.001, sprite: 'mall' },
+  airbase: { name: 'Base aerea', icon: '✈️', req: 'aviation', cost: { metal: 2e6 }, use: { gold: 1000 }, def: 2e5, energy: -20, sprite: 'airbase' },
+  mall: { name: 'Centro commerciale', icon: '🛍️', req: 'consumerism', cost: { metal: 1.5e6, gold: 500000 }, use: { metal: 500 }, prod: { gold: 2000 }, stab: 1.5, energy: -25, pol: 0.001, sprite: 'mall' },
   filter: { name: 'Depuratore', icon: '💧', req: 'ecology', cost: { metal: 1e6, gold: 500000 }, pol: -0.02, energy: -20, sprite: 'tank' },
   // --- Era 7
   skyscraper: { name: 'Grattacielo', icon: '🏙️', req: 'era7', cost: { metal: 1.6e7, gold: 4e6 }, housing: 2000, energy: -50, sprite: 'skyscraper' },
   hub: { name: 'Hub automatizzato', icon: '🗄️', req: 'robotics', cost: { metal: 2e7, gold: 1e7 }, mult: 1.2, caps: { food: 3e9, wood: 3e9, stone: 3e9, metal: 3e9, gold: 2e9 }, energy: -50, sprite: 'shed' },
-  datacenter: { name: 'Data center', icon: '🖥️', req: 'internet', cost: { metal: 1.2e7, gold: 6e6 }, slots: { technician: 25 }, mult: 1.1, energy: -200, ai: 0.004, sprite: 'datacenter' },
+  datacenter: { name: 'Data center', icon: '🖥️', req: 'internet', cost: { metal: 1.2e7, gold: 6e6 }, use: { gold: 2000 }, slots: { technician: 25 }, mult: 1.1, energy: -200, ai: 0.004, sprite: 'datacenter' },
   fusion_plant: { name: 'Reattore a fusione', icon: '🌞', req: 'fusion', cost: { metal: 4e7, gold: 1e7 }, energy: 5000, sprite: 'fusion' },
   alignment_inst: { name: 'Istituto di allineamento', icon: '🧭', req: 'alignment', cost: { metal: 1e7, gold: 1e7 }, ai: -0.012, sprite: 'lab' },
   carbon_capture: { name: 'Cattura del carbonio', icon: '🌀', req: 'geoeng', cost: { metal: 2e7 }, pol: -0.15, energy: -300, sprite: 'tank' },
@@ -108,7 +109,7 @@ export const BUILDINGS = {
   // --- Era 8
   arcology: { name: 'Arcologia', icon: '🔺', req: 'nanotech', cost: { metal: 5e8, gold: 1e8 }, housing: 15000, stab: 2, energy: -500, sprite: 'arcology' },
   vault: { name: 'Deposito quantico', icon: '🧊', req: 'nanotech', cost: { metal: 2e8, gold: 1e8 }, mult: 1.2, caps: { food: 1e11, wood: 1e11, stone: 1e11, metal: 1e11, gold: 1e11 }, energy: -500, sprite: 'shed' },
-  quantum_fab: { name: 'Fabbrica quantistica', icon: '⚛️', req: 'quantum', cost: { metal: 1.2e8, gold: 4e7 }, slots: { engineer: 25 }, mult: 1.1, energy: -2000, sprite: 'quantum' },
+  quantum_fab: { name: 'Fabbrica quantistica', icon: '⚛️', req: 'quantum', cost: { metal: 1.2e8, gold: 4e7 }, use: { metal: 100000 }, slots: { engineer: 25 }, mult: 1.1, energy: -2000, sprite: 'quantum' },
   planet_shield: { name: 'Scudo planetario', icon: '🛡️', req: 'planetary_defense', cost: { metal: 2e8, exotic: 150 }, max: 1, def: 1e9, energy: -5000, sprite: 'shield' },
   // --- Megaprogetti (5 fasi, completarli vince la partita)
   dyson: { name: 'Sfera di Dyson', icon: '☀️', req: 'dest_dyson', cost: { metal: 1e8, exotic: 300, knowledge: 5e8 }, mult: 1.5, max: 5, mega: true, sprite: 'dyson',

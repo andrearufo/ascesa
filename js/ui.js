@@ -31,6 +31,7 @@ function bFx(b) {
   if (b.housing) p.push(`🏠 +${fmt(b.housing)} alloggi`);
   if (b.slots) for (const j in b.slots) p.push(`${JOBS[j].icon} +${b.slots[j]} posti ${JOBS[j].name}`);
   if (b.prod) for (const k in b.prod) p.push(`${RES[k].icon} +${fmt(b.prod[k])}/s`);
+  if (b.use) for (const k in b.use) p.push(`<span class="neg">${RES[k].icon} −${fmt(b.use[k])}/s</span>`);
   if (b.caps) p.push('📦 ' + Object.entries(b.caps).map(([k, v]) => `${RES[k].icon}+${fmt(v)}`).join(' '));
   if (b.energy) p.push(`⚡ ${sign(b.energy)}`);
   if (b.stab) p.push(`⚖️ ${sign(b.stab)} stabilità`);
@@ -84,7 +85,10 @@ function render() {
   list($('resources'), Object.keys(RES).filter(k => S.seen[k]).map(k => {
     const cap = r.caps[k], pct = cap === Infinity ? 0 : Math.min(100, S.res[k] / cap * 100), n = r.net[k];
     return { k, cls: 'res', html: `<span>${RES[k].icon}</span><span>${RES[k].name}</span><span class="amt">${fmt(S.res[k])}${cap === Infinity ? '' : ' / ' + fmt(cap)}</span>
-      <span class="rate">${pct >= 99.9 && n > 0 ? `<span class="wasted" title="Deposito pieno: questa produzione va persa. Sposta i lavoratori o costruisci depositi.">pieno · ${sign(n)}/s sprecati</span>` : `<span class="${n > 0 ? 'pos' : n < 0 ? 'neg' : ''}">${sign(n)}/s</span>`}${k === 'food' ? `<span>consumo ${fmt(r.cons.food)}/s</span>` : ''}</span>
+      <span class="rate">${pct >= 99.9 && n > 0 ? `<span class="wasted" title="Deposito pieno: questa produzione va persa. Sposta i lavoratori o costruisci depositi.">pieno · ${sign(n)}/s sprecati</span>`
+        : r.short[k] !== undefined ? `<span class="neg" title="Scorta esaurita: chi consuma questa risorsa lavora solo al ${Math.round(r.short[k] * 100)}%.">carenza · edifici al ${Math.round(r.short[k] * 100)}%</span>`
+        : `<span class="${n > 0 ? 'pos' : n < 0 ? 'neg' : ''}">${r.useBy[k] ? 'saldo ' : ''}${sign(n)}/s</span>`}
+        ${r.useBy[k] ? `<span title="${(r.useBy[k] || []).map(([a, v]) => `${a}: −${fmt(v)}/s`).join('\n')}">prod. +${fmt(r.prod[k])} · cons. −${fmt(r.cons[k])}</span>` : ''}</span>
       ${cap === Infinity ? '' : `<div class="bar"><i class="${pct >= 99.9 ? 'full' : ''}" style="width:${pct}%"></i></div>`}` };
   }));
 

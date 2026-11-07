@@ -69,7 +69,7 @@ function shop(s) {
 function play(diff, seed) {
   const raw = process.env.SAVE && decodeURIComponent(escape(atob(fs.readFileSync(process.env.SAVE, 'utf8').trim())));
   const s = raw ? G.load({ getItem: () => raw }) : G.newState(diff), eras = {}, wait = {};
-  let ch = 0;
+  let ch = 0; const short = {};
   for (let t = 0; t < 10 * 3600 && !s.over && !s.won; t++) {
     if (s.choice) { choose(s, (ch++ + seed) % EVENTS[s.choice.id].options.length, G.calc(s)); continue; }
     for (const c of s.crises) resolveCrisis(s, c.id, G.calc(s));
@@ -81,18 +81,20 @@ function play(diff, seed) {
     shop(s);
     if (s.res.knowledge < 20 || t % 2) G.click(s);
     G.tick(s, 1);
+    for (const k in G.calc(s).short) short[`e${s.era}:${k}`] = (short[`e${s.era}:${k}`] || 0) + 1;
     if (process.env.A && t % 120 === 0 && s.era === 8) console.log(`  ${m(t)} ast ${s.crises.map(c => c.id + ':' + Math.round(c.left)).join(',')} qf ${s.buildings.quantum_fab} eng ${s.jobs.engineer} ex ${Math.round(s.res.exotic)} m ${s.res.metal.toExponential(1)} mrate ${G.calc(s).prod.metal.toExponential(1)} pd ${!!s.techs.planetary_defense} g ${s.res.gold.toExponential(1)} capM ${G.calc(s).caps.metal.toExponential(1)} capG ${G.calc(s).caps.gold.toExponential(1)} ps ${s.buildings.planet_shield} lock ${G.bLocked(s,"planet_shield")} sp ${s.buildings.spaceport} eff ${G.calc(s).eff.toFixed(2)}`);
     const adv = Object.keys(TECHS).find(id => TECHS[id].advance && G.techAvailable(s, id));
     if (adv) for (const k in TECHS[adv].cost) if (s.res[k] < TECHS[adv].cost[k]) { const key = `e${s.era}:${k}${TECHS[adv].cost[k] > G.calc(s).caps[k] ? '(cap)' : ''}`; wait[key] = (wait[key] || 0) + 1; }
     if (process.env.V && t % 300 === 0) { const r = G.calc(s); console.log(`  ${m(t)} e${s.era} pop ${s.pop}/${r.housing} prod ${Object.entries(r.prod).filter(([, v]) => v).map(([k, v]) => k[0] + v.toExponential(1)).join(' ')} capM ${r.caps.metal.toExponential(1)} hub ${s.buildings.hub} sp ${s.buildings.spaceport} fac ${s.buildings.factory} wk ${s.jobs.worker} dc ${s.buildings.datacenter} fus ${s.buildings.fusion_plant} eff ${G.calc(s).eff.toFixed(2)} def ${Math.round(r.def)}/${threat(s)} stab ${s.stability.toFixed(0)} pol ${s.pollution.toFixed(0)}/${(G.calc(s).pol*60).toFixed(2)} park ${s.buildings.park} filt ${s.buildings.filter} coal ${s.buildings.coal_plant} oil ${s.buildings.oil_plant} eff ${r.eff.toFixed(2)} res ${Object.entries(s.res).map(([k, v]) => k[0] + Math.round(v)).join(' ')} next ${Object.keys(TECHS).filter(id => G.techAvailable(s, id)).join(',')}`); }
   }
-  return { s, eras, wait };
+  return { s, eras, wait, short };
 }
 
 const runs = +(process.argv[2] || 3), diff = process.argv[3] || 'normal';
 for (let i = +(process.argv[4] || 0); i < runs; i++) {
-  const { s, eras, wait } = play(diff, i);
+  const { s, eras, wait, short } = play(diff, i);
   const r = G.calc(s);
+  console.log('   carenze (min):', Object.entries(short).map(([k, v]) => k + '=' + m(v)).join(' ') || 'nessuna');
   console.log('   attesa avanzamento era (min):', Object.entries(wait).filter(([, v]) => v > 120).map(([k, v]) => k + '=' + m(v)).join(' '));
   console.log(`#${i} ${s.won ? 'VITTORIA ' + s.won.id : s.over ? 'SCONFITTA ' + s.over.id : 'TEMPO SCADUTO'} a ${m(s.t)} · era ${s.era} · pop ${Math.round(s.pop)} · ere: ${Object.entries(eras).map(([e, t]) => e + '@' + m(t)).join(' ')}`);
   console.log(`   razzie ${s.stats.raidsWon}/${s.stats.raidsLost} · crisi ${s.stats.crisesWon} · stab ${s.stability.toFixed(0)} · inq ${s.pollution.toFixed(0)} · IA ${s.aiRisk.toFixed(0)} · k/s ${r.prod.knowledge.toExponential(1)} · tech ${Object.keys(s.techs).length} · ${s.log.filter(l => l.type === 'bad').slice(0, 2).map(l => l.msg).join(' | ')}`);

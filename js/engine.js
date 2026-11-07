@@ -54,8 +54,10 @@ export const employed = s => keys(s.jobs).reduce((a, j) => a + s.jobs[j], 0);
 export const stabMult = s => 0.6 + s.stability * 0.008;
 
 // ---------- calcolo di tutte le rendite
-export function calc(s, m = mods(s)) {
-  const r = { m, prod: {}, cons: {}, net: {}, caps: {}, slots: {}, housing: BASE_HOUSING, energyProd: 0, energyDem: 0, eff: 1, def: 0, pol: 0, ai: 0, stabParts: [] };
+// sup: frazione di rifornimento per le risorse esaurite (secondo passaggio, vedi in fondo)
+export function calc(s, m = mods(s), sup = null) {
+  const fuel = b => b.use && sup ? Math.min(1, ...Object.keys(b.use).map(k => sup[k] ?? 1)) : 1;
+  const r = { m, prod: {}, cons: {}, net: {}, useBy: {}, short: sup || {}, caps: {}, slots: {}, housing: BASE_HOUSING, energyProd: 0, energyDem: 0, eff: 1, def: 0, pol: 0, ai: 0, stabParts: [] };
   for (const k in RES) { r.prod[k] = 0; r.cons[k] = 0; r.caps[k] = RES[k].cap; }
   let bStab = 0, bDef = 0;
   for (const id in s.buildings) {
@@ -64,7 +66,7 @@ export function calc(s, m = mods(s)) {
     if (b.housing) r.housing += b.housing * n;
     if (b.caps) for (const k in b.caps) r.caps[k] += b.caps[k] * n;
     if (b.slots) for (const j in b.slots) r.slots[j] = (r.slots[j] || 0) + b.slots[j] * n;
-    if (b.energy > 0) r.energyProd += b.energy * n; else if (b.energy < 0) r.energyDem -= b.energy * n;
+    if (b.energy > 0) r.energyProd += b.energy * n * fuel(b); else if (b.energy < 0) r.energyDem -= b.energy * n;
   }
   r.energyProd *= m.energy;
   r.eff = r.energyDem > 0 ? Math.min(1, r.energyProd / r.energyDem) : 1;
@@ -74,12 +76,13 @@ export function calc(s, m = mods(s)) {
   for (const id in s.buildings) {
     const n = s.buildings[id], b = BUILDINGS[id];
     if (!n) continue;
-    const e = b.energy < 0 ? r.eff : 1;
+    const f = fuel(b), e = (b.energy < 0 ? r.eff : 1) * f;
     if (b.prod) for (const k in b.prod) r.prod[k] += b.prod[k] * n * e;
+    if (b.use) for (const k in b.use) { const u = b.use[k] * n * e; r.cons[k] += u; (r.useBy[k] ||= []).push([`${b.icon} ${b.name} ×${n}`, u]); }
     if (b.pol) r.pol += b.pol * n * (b.pol > 0 ? m.pol * e : 1);
     if (b.ai) r.ai += b.ai * n * (b.ai > 0 ? m.ai * e : 1);
-    if (b.stab) bStab += b.stab * n;
-    if (b.def) bDef += b.def * n;
+    if (b.stab) bStab += b.stab * n * (b.stab > 0 ? f : 1);
+    if (b.def) bDef += b.def * n * f;
   }
 
   let sDef = 0, pStab = 0;
@@ -95,8 +98,15 @@ export function calc(s, m = mods(s)) {
   r.prod.food += idle * IDLE_FOOD;
   const sm = stabMult(s);
   for (const k in r.prod) r.prod[k] *= (m.rm[k] ?? 1) * (m.rm.all ?? 1) * sm;
-  r.cons.food = s.pop * FOOD_PER_POP * m.foodCons;
+  r.cons.food += s.pop * FOOD_PER_POP * m.foodCons;
+  (r.useBy.food ||= []).unshift(['👥 Popolazione', s.pop * FOOD_PER_POP * m.foodCons]);
   for (const k in RES) r.net[k] = r.prod[k] - r.cons[k];
+  // scorta esaurita e consumo > produzione: gli edifici che la usano lavorano solo in proporzione
+  if (!sup) {
+    const short = {};
+    for (const k in RES) if (k !== 'food' && s.res[k] <= 0 && r.net[k] < 0) short[k] = r.prod[k] / r.cons[k];
+    if (Object.keys(short).length) return calc(s, m, short);
+  }
   r.def = sDef * m.def + bDef;
   r.idle = idle;
 
