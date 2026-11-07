@@ -76,7 +76,9 @@ function play(diff, seed) {
     const techs = Object.keys(TECHS).filter(id => G.techAvailable(s, id)).sort((a, b) => sum(TECHS[a].cost) - sum(TECHS[b].cost));
     const groups = {};
     for (const id of techs) { const g = TECHS[id].group; if (g) (groups[g] ||= []).push(id); }
-    if (!s.crises.some(c => CRISES[c.id].cost)) for (const id of techs) if (!TECHS[id].group || groups[TECHS[id].group][seed % groups[TECHS[id].group].length] === id) if (G.research(s, id) && TECHS[id].advance) eras[s.era] = s.t;
+    // una ricerca alla volta, avviata solo quando è pagabile (niente coda)
+    if (!s.research && !s.crises.some(c => CRISES[c.id].cost)) for (const id of techs) if ((!TECHS[id].group || groups[TECHS[id].group][seed % groups[TECHS[id].group].length] === id) && G.canAfford(s, TECHS[id].cost) && G.research(s, id)) break;
+    if (!eras[s.era] && s.era > 1) eras[s.era] = s.t;
     if (t % 5 === 0) setJobs(s);
     shop(s);
     if (s.res.knowledge < 20 || t % 2) G.click(s);

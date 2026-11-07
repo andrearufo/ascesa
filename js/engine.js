@@ -19,6 +19,7 @@ export function newState(difficulty = 'normal', legacy = 0) {
     techs: {}, stability: 60, pollution: 0, aiRisk: 0, zeroStabT: 0,
     temp: [], crises: [], crisesDone: {}, nextEvent: 150, choice: null,
     log: [], stats: { clicks: 0, raidsWon: 0, raidsLost: 0, events: 0, maxPop: 3, died: 0, crisesWon: 0, revoltSurvived: 0 }, hist: [],
+    research: null, queue: [],
     ach: {}, clickTarget: 'food', over: null, won: null, eraUp: null,
     seen: { food: 1, wood: 1, knowledge: 1 }, created: Date.now(), last: Date.now(),
   };
@@ -219,16 +220,46 @@ export function techAvailable(s, id) {
   if (t.group && groupTaken(s, t.group)) return false;
   return (t.req || []).every(q => q.startsWith('group:') ? groupTaken(s, q.slice(6)) : s.techs[q]);
 }
+// ricerca: si paga all'avvio e richiede tempo; le altre aspettano in coda (anche se non ancora pagabili)
+const RTIME = [0, 8, 15, 25, 35, 50, 70, 90, 120]; // secondi per era, ×3 per il passaggio d'era
+export const techTime = id => RTIME[TECHS[id].era] * (TECHS[id].advance ? 3 : 1);
+const planned = s => [s.research?.id, ...s.queue].filter(Boolean);
+// come techAvailable, ma conta come già scoperte le tecnologie in corso o in coda
+export function techQueueable(s, id) {
+  const t = TECHS[id], P = planned(s);
+  const got = q => s.techs[q] || P.includes(q), taken = g => groupTaken(s, g) || P.some(p => TECHS[p].group === g);
+  if (got(id) || t.era > s.era || (t.group && taken(t.group))) return false;
+  return (t.req || []).every(q => q.startsWith('group:') ? taken(q.slice(6)) : got(q));
+}
 export function research(s, id) {
+  if (!techQueueable(s, id)) return false;
+  s.queue.push(id);
+  startNext(s);
+  return true;
+}
+// toglie dalla coda la tecnologia e quelle che ne dipendono
+export function unqueue(s, id) {
+  const q = s.queue;
+  s.queue = [];
+  for (const x of q) if (x !== id && techQueueable(s, x)) s.queue.push(x);
+}
+function startNext(s) {
+  while (!s.research && s.queue.length) {
+    const id = s.queue[0];
+    if (!techAvailable(s, id)) { s.queue.shift(); continue; }
+    if (!canAfford(s, TECHS[id].cost)) return;
+    pay(s, TECHS[id].cost);
+    s.queue.shift();
+    s.research = { id, left: techTime(id), total: techTime(id) };
+  }
+}
+function complete(s, id) {
   const t = TECHS[id];
-  if (!techAvailable(s, id) || !canAfford(s, t.cost)) return false;
-  pay(s, t.cost);
   s.techs[id] = s.t;
   if (t.advance) {
     s.era = t.advance; s.eraStart = s.t; s.eraUp = t.advance;
     log(s, `🌅 Inizia l'era: ${ERAS[t.advance].name}!`, 'era');
   } else log(s, `🔬 Scoperta: ${t.name}`, 'tech');
-  return true;
 }
 
 export function year(s) {
@@ -243,6 +274,8 @@ export function year(s) {
 export function tick(s, dt, opts = {}) {
   if (s.over || s.won || s.choice) return;
   s.t += dt;
+  if (s.research && (s.research.left -= dt) <= 0) { complete(s, s.research.id); s.research = null; }
+  startNext(s);
   const r = calc(s);
   for (const k in RES) {
     s.res[k] = clamp(s.res[k] + r.net[k] * dt, 0, Math.max(r.caps[k], 0));

@@ -68,6 +68,10 @@ aside { display: flex; flex-direction: column; gap: 14px; }
 .item.buyable:hover { border-color: var(--accent); }
 .item.ok { border-color: color-mix(in srgb, var(--good) 50%, var(--line)); }
 .item.done { opacity: .6; }
+.progress { height: 8px; background: var(--panel2); border-radius: 4px; overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--accent); transition: width .2s linear; }
+.item.research { border-color: var(--accent); }
+.item.queued { padding: 6px 12px; }
 .item .t { display: flex; justify-content: space-between; align-items: baseline; font-weight: 700; }
 .item .t small { color: var(--accent); font-weight: 700; }
 .item .d { color: var(--muted); font-size: 12px; }

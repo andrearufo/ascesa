@@ -112,8 +112,8 @@ function render() {
 }
 
 function renderTabs(r) {
-  const nTech = Object.keys(TECHS).filter(id => G.techAvailable(S, id) && G.canAfford(S, TECHS[id].cost)).length;
-  const tabs = [['jobs', '👥 Lavori'], ['build', '🏗️ Edifici'], ['tech', '🔬 Ricerca' + (nTech ? `<span class="badge">${nTech}</span>` : '')], ['stats', '📊 Cronologia']];
+  const R = S.research, nTech = R ? 0 : Object.keys(TECHS).filter(id => G.techAvailable(S, id) && G.canAfford(S, TECHS[id].cost)).length;
+  const tabs = [['jobs', '👥 Lavori'], ['build', '🏗️ Edifici'], ['tech', '🔬 Ricerca' + (R ? ` ${Math.floor((1 - R.left / R.total) * 100)}%` : '') + (nTech ? `<span class="badge">${nTech}</span>` : '')], ['stats', '📊 Cronologia']];
   list($('tabs'), tabs.map(([k, l]) => ({ k, html: `<button data-act="tab:${k}" class="${tab === k ? 'on' : ''}">${l}</button>` })));
   const P = $('panel');
   if (P._tab !== tab) { P._tab = tab; P.innerHTML = ''; }
@@ -188,18 +188,27 @@ function renderBuild(P, r) {
 }
 
 function renderTech(P, r) {
-  const avail = Object.keys(TECHS).filter(id => G.techAvailable(S, id));
+  const avail = Object.keys(TECHS).filter(id => G.techQueueable(S, id));
+  const R = S.research, busy = R || S.queue.length;
+  const rq = [];
+  if (R) rq.push({ k: 'now', cls: 'item research', html: `<div class="t"><span>🔬 ${TECHS[R.id].name}</span><small>${time(Math.ceil(R.left))}</small></div>
+    <div class="progress"><i style="width:${(1 - R.left / R.total) * 100}%"></i></div>` });
+  S.queue.forEach((id, i) => rq.push({ k: 'q' + id, cls: 'item buyable queued', attr: `data-act="unqueue:${id}" title="Clic per togliere dalla coda"`,
+    html: `<div class="t"><span>${i + 1}. ${TECHS[id].name}</span><small>⏱ ${time(G.techTime(id))} ✕</small></div>
+    ${!R && !i ? '<div class="d neg">In attesa delle risorse</div>' : ''}<div class="cost">${costHTML(TECHS[id].cost, r)}</div>` }));
+  section(P, 'rq', 'In corso e in coda <small class="d">— si paga all\'avvio di ogni ricerca; clic su una voce in coda per toglierla</small>', rq, 'grid one');
   const mk = id => {
     const t = TECHS[id], ok = G.canAfford(S, t.cost);
-    return { k: id, cls: `item buyable ${ok ? 'ok' : ''} ${t.advance ? 'advance' : ''}`, attr: `data-act="tech:${id}"`,
-      html: `<div class="t"><span>${t.advance ? '🌅 ' : ''}${t.name}</span><small>${ERAS[t.era].name}</small></div><div class="d">${t.desc}</div>
+    return { k: id, cls: `item buyable ${ok ? 'ok' : ''} ${t.advance ? 'advance' : ''}`, attr: `data-act="tech:${id}" title="${busy ? 'Metti in coda' : 'Avvia la ricerca'}"`,
+      html: `<div class="t"><span>${t.advance ? '🌅 ' : ''}${t.name}</span><small>⏱ ${time(G.techTime(id))} · ${ERAS[t.era].name}</small></div><div class="d">${t.desc}</div>
       ${t.fx && Object.keys(t.fx).length ? `<div class="fx">${tFx(t.fx)}</div>` : ''}<div class="cost">${costHTML(t.cost, r)}</div>` };
   };
   const groups = [...new Set(avail.map(id => TECHS[id].group).filter(Boolean))];
   section(P, 'adv', 'Prossima era', avail.filter(id => TECHS[id].advance).map(mk));
   for (const g of Object.keys(GROUPS)) section(P, 'g-' + g, `⚖️ Scelta: ${GROUPS[g]} <small class="d">— puoi sceglierne solo una, le altre verranno escluse per sempre</small>`, groups.includes(g) ? avail.filter(id => TECHS[id].group === g).map(mk) : []);
   section(P, 'avail', 'Tecnologie disponibili', avail.filter(id => !TECHS[id].group && !TECHS[id].advance).map(mk));
-  const next = Object.keys(TECHS).filter(id => !S.techs[id] && TECHS[id].era === S.era && !avail.includes(id) && !(TECHS[id].group && G.groupTaken(S, TECHS[id].group)));
+  const plan = [R?.id, ...S.queue];
+  const next = Object.keys(TECHS).filter(id => !S.techs[id] && !plan.includes(id) && TECHS[id].era === S.era && !avail.includes(id) && !(TECHS[id].group && G.groupTaken(S, TECHS[id].group)));
   section(P, 'locked', 'Ancora da sbloccare in questa era', next.map(id => ({ k: id, cls: 'item done', html: `<div class="t"><span>🔒 ${TECHS[id].name}</span></div><div class="d">Richiede: ${(TECHS[id].req || []).map(q => q.startsWith('group:') ? GROUPS[q.slice(6)] : TECHS[q].name).join(', ')}</div>` })));
   const done = Object.keys(S.techs);
   section(P, 'done', `Scoperte (${done.length}/${Object.keys(TECHS).length})`, done.length ? [{ k: done.length, cls: 'd', html: done.map(id => TECHS[id].name).join(' · ') }] : [], '');
@@ -280,6 +289,7 @@ function act(a, ev) {
   if (k === 'job') G.assign(S, x, +y);
   if (k === 'buy') G.buy(S, x, ev?.shiftKey ? 10 : 1);
   if (k === 'tech') G.research(S, x);
+  if (k === 'unqueue') G.unqueue(S, x);
   if (k === 'close') closeModal();
   if (k === 'choose') { choose(S, +x, G.calc(S)); closeModal(); }
   if (k === 'crisis') resolveCrisis(S, x, G.calc(S));
