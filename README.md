@@ -13,7 +13,7 @@ Guida una tribù dalla preistoria fino a un futuro iper-tecnologico.
 - **Costruisci** alloggi, magazzini (le capacità limitano i costi raggiungibili!), centrali, laboratori.
 - **Gestisci i consumi**: alcuni edifici consumano risorse (fucine e centrali a carbone il legno, teatri e centrali petrolifere l'oro, centrali nucleari il metallo…). Se una scorta finisce, quegli edifici rendono solo in proporzione. Il pannello Risorse mostra produzione, consumo e saldo.
 - **Ricerca** oltre 100 tecnologie in 8 ere e compi **8 scelte esclusive** (tribù, governo, economia, questione sociale, energia, ideologia, IA, destino).
-  Ogni ricerca si paga all'avvio e richiede tempo (da 8 s nella Preistoria a 2 minuti nell'ultima era, il triplo per il passaggio d'era). Puoi metterne in coda altre, anche quelle che dipendono da ricerche ancora in corso: partono da sole appena hai le risorse.
+  Ogni ricerca si paga all'avvio e richiede tempo (da 15 s nella Preistoria a 4 minuti nell'ultima era, il triplo per il passaggio d'era). Puoi metterne in coda altre, anche quelle che dipendono da ricerche ancora in corso: partono da sole appena hai le risorse.
 - **Vinci** completando uno dei tre megaprogetti dell'ultima era: *Sfera di Dyson*, *Arca Stellare* o *Ascensione Digitale*.
 
 ## Le ere

@@ -221,7 +221,7 @@ export function techAvailable(s, id) {
   return (t.req || []).every(q => q.startsWith('group:') ? groupTaken(s, q.slice(6)) : s.techs[q]);
 }
 // ricerca: si paga all'avvio e richiede tempo; le altre aspettano in coda (anche se non ancora pagabili)
-const RTIME = [0, 8, 15, 25, 35, 50, 70, 90, 120]; // secondi per era, ×3 per il passaggio d'era
+const RTIME = [0, 15, 30, 50, 75, 100, 140, 180, 240]; // secondi per era, ×3 per il passaggio d'era
 export const techTime = id => RTIME[TECHS[id].era] * (TECHS[id].advance ? 3 : 1);
 const planned = s => [s.research?.id, ...s.queue].filter(Boolean);
 // come techAvailable, ma conta come già scoperte le tecnologie in corso o in coda
