@@ -195,8 +195,8 @@ function renderTech(P, r) {
     <div class="progress"><i style="width:${(1 - R.left / R.total) * 100}%"></i></div>` });
   S.queue.forEach((id, i) => rq.push({ k: 'q' + id, cls: 'item buyable queued', attr: `data-act="unqueue:${id}" title="Clic per togliere dalla coda"`,
     html: `<div class="t"><span>${i + 1}. ${TECHS[id].name}</span><small>⏱ ${time(G.techTime(id))} ✕</small></div>
-    ${!R && !i ? '<div class="d neg">In attesa delle risorse</div>' : ''}<div class="cost">${costHTML(TECHS[id].cost, r)}</div>` }));
-  section(P, 'rq', 'In corso e in coda <small class="d">— si paga all\'avvio di ogni ricerca; clic su una voce in coda per toglierla</small>', rq, 'grid one');
+    <div class="cost">${costHTML(TECHS[id].cost, r)}</div>` }));
+  section(P, 'rq', 'In corso e in coda <small class="d">— si paga quando la metti in coda; clic su una voce per toglierla e riavere le risorse</small>', rq, 'grid one');
   const mk = id => {
     const t = TECHS[id], ok = G.canAfford(S, t.cost);
     return { k: id, cls: `item buyable ${ok ? 'ok' : ''} ${t.advance ? 'advance' : ''}`, attr: `data-act="tech:${id}" title="${busy ? 'Metti in coda' : 'Avvia la ricerca'}"`,

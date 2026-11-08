@@ -220,7 +220,7 @@ export function techAvailable(s, id) {
   if (t.group && groupTaken(s, t.group)) return false;
   return (t.req || []).every(q => q.startsWith('group:') ? groupTaken(s, q.slice(6)) : s.techs[q]);
 }
-// ricerca: si paga all'avvio e richiede tempo; le altre aspettano in coda (anche se non ancora pagabili)
+// ricerca: si paga subito (anche se va in coda) e richiede tempo; una alla volta
 const RTIME = [0, 15, 30, 50, 75, 100, 140, 180, 240]; // secondi per era, ×3 per il passaggio d'era
 export const techTime = id => RTIME[TECHS[id].era] * (TECHS[id].advance ? 3 : 1);
 const planned = s => [s.research?.id, ...s.queue].filter(Boolean);
@@ -232,26 +232,25 @@ export function techQueueable(s, id) {
   return (t.req || []).every(q => q.startsWith('group:') ? taken(q.slice(6)) : got(q));
 }
 export function research(s, id) {
-  if (!techQueueable(s, id)) return false;
+  if (!techQueueable(s, id) || !canAfford(s, TECHS[id].cost)) return false;
+  pay(s, TECHS[id].cost);
   s.queue.push(id);
   startNext(s);
   return true;
 }
-// toglie dalla coda la tecnologia e quelle che ne dipendono
+// toglie dalla coda la tecnologia e quelle che ne dipendono, rimborsandole
 export function unqueue(s, id) {
   const q = s.queue;
   s.queue = [];
-  for (const x of q) if (x !== id && techQueueable(s, x)) s.queue.push(x);
+  for (const x of q) {
+    if (x !== id && techQueueable(s, x)) s.queue.push(x);
+    else for (const k in TECHS[x].cost) s.res[k] += TECHS[x].cost[k];
+  }
 }
 function startNext(s) {
-  while (!s.research && s.queue.length) {
-    const id = s.queue[0];
-    if (!techAvailable(s, id)) { s.queue.shift(); continue; }
-    if (!canAfford(s, TECHS[id].cost)) return;
-    pay(s, TECHS[id].cost);
-    s.queue.shift();
-    s.research = { id, left: techTime(id), total: techTime(id) };
-  }
+  if (s.research || !s.queue.length) return;
+  const id = s.queue.shift();
+  s.research = { id, left: techTime(id), total: techTime(id) };
 }
 function complete(s, id) {
   const t = TECHS[id];
