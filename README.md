@@ -5,10 +5,12 @@ Guida una tribù dalla preistoria fino a un futuro iper-tecnologico.
 
 **Gioca:** https://andrearufo.github.io/ascesa/
 
+In italiano e in inglese (*Italian and English*): la lingua segue quella del browser e si cambia con il pulsante 🌐 in alto.
+
 ## Come si gioca
 
 - **Clicca** per raccogliere la risorsa selezionata; il click cresce con la tua produzione.
-  Da tastiera: `Spazio` per la risorsa selezionata, oppure `C` cibo, `L` legno, `P` pietra, `M` metallo, `O` oro, `K` conoscenza. Conta una pressione alla volta: tenere premuto non raccoglie nulla.
+  Da tastiera: `Spazio` per la risorsa selezionata, oppure `C` cibo, `L` legno, `P` pietra, `M` metallo, `O` oro, `K` conoscenza (in inglese `F`, `W`, `S`, `M`, `G`, `K`). Conta una pressione alla volta: tenere premuto non raccoglie nulla.
 - **Assegna i lavori**: raccoglitori, taglialegna, cavatori, saggi, soldati… e poi contadini, minatori, studiosi, operai, scienziati, tecnici IA, ingegneri quantistici.
 - **Costruisci** alloggi, magazzini (le capacità limitano i costi raggiungibili!), centrali, laboratori.
 - **Gestisci i consumi**: alcuni edifici consumano risorse (fucine e centrali a carbone il legno, teatri e centrali petrolifere l'oro, centrali nucleari il metallo…). Se una scorta finisce, quegli edifici rendono solo in proporzione. Il pannello Risorse mostra produzione, consumo e saldo.
@@ -50,6 +52,8 @@ js/engine.js   motore (senza DOM): economia, popolazione, stabilità, salvataggi
 js/events.js   eventi, razzie, crisi, sconfitte
 js/scene.js    scena animata su canvas
 js/ui.js       interfaccia
+js/i18n.js     lingua: t`testo` traduce dall'italiano con il dizionario di js/en.js
+test/i18n.js   controlla che ogni testo abbia la traduzione inglese
 test/sim.js    controllo dei dati + bot che gioca partite intere per il bilanciamento
 ```
 

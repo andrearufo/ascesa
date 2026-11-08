@@ -1,6 +1,7 @@
 // Ascesa — motore di gioco (nessun accesso al DOM: gira anche in node per i test)
 import { RES, JOBS, BUILDINGS, TECHS, ERAS, ACHIEVEMENTS, DIFFICULTY } from './data.js';
 import { runEvents } from './events.js';
+import { t, t as tr } from './i18n.js';
 
 export const SAVE_KEY = 'ascesa_save_v1';
 export const LEGACY_KEY = 'ascesa_legacy_v1';
@@ -100,7 +101,7 @@ export function calc(s, m = mods(s), sup = null) {
   const sm = stabMult(s);
   for (const k in r.prod) r.prod[k] *= (m.rm[k] ?? 1) * (m.rm.all ?? 1) * sm;
   r.cons.food += s.pop * FOOD_PER_POP * m.foodCons;
-  (r.useBy.food ||= []).unshift(['👥 Popolazione', s.pop * FOOD_PER_POP * m.foodCons]);
+  (r.useBy.food ||= []).unshift([t('👥 Popolazione'), s.pop * FOOD_PER_POP * m.foodCons]);
   for (const k in RES) r.net[k] = r.prod[k] - r.cons[k];
   // scorta esaurita e consumo > produzione: gli edifici che la usano lavorano solo in proporzione
   if (!sup) {
@@ -207,7 +208,7 @@ export function buy(s, id, qty = 1) {
     done++;
     const b = BUILDINGS[id];
     if (b.mega) {
-      log(s, `${b.icon} ${b.name}: fase ${s.buildings[id]}/${b.max} completata!`, 'good');
+      log(s, t`${b.icon} ${b.name}: fase ${s.buildings[id]}/${b.max} completata!`, 'good');
       if (s.buildings[id] >= b.max) s.won = { id, t: s.t };
     }
   }
@@ -257,8 +258,8 @@ function complete(s, id) {
   s.techs[id] = s.t;
   if (t.advance) {
     s.era = t.advance; s.eraStart = s.t; s.eraUp = t.advance;
-    log(s, `🌅 Inizia l'era: ${ERAS[t.advance].name}!`, 'era');
-  } else log(s, `🔬 Scoperta: ${t.name}`, 'tech');
+    log(s, tr`🌅 Inizia l'era: ${ERAS[t.advance].name}!`, 'era');
+  } else log(s, tr`🔬 Scoperta: ${t.name}`, 'tech');
 }
 
 export function year(s) {
@@ -266,7 +267,7 @@ export function year(s) {
   const f = ids.filter(id => s.techs[id]).length / ids.length;
   const [a, b] = ERAS[s.era].years;
   const y = Math.round(a + (b - a) * f);
-  return y < 0 ? `${-y} a.C.` : `${y} d.C.`;
+  return y < 0 ? t`${-y} a.C.` : t`${y} d.C.`;
 }
 
 // ---------- tick
@@ -288,7 +289,7 @@ export function tick(s, dt, opts = {}) {
       s.starveAcc = 0;
       const n = killPop(s, Math.max(1, Math.ceil(s.pop * 0.04)));
       if (opts.offline && s.pop < 1) s.pop = 1;
-      log(s, `💀 Carestia: ${n} persone muoiono di fame!`, 'bad');
+      log(s, t`💀 Carestia: ${n} persone muoiono di fame!`, 'bad');
     }
   } else s.starveAcc = 0;
   // crescita
@@ -309,7 +310,7 @@ export function tick(s, dt, opts = {}) {
   runEvents(s, dt, r, opts);
   for (const id in ACHIEVEMENTS) if (!s.ach[id] && ACHIEVEMENTS[id].cond(s, r)) {
     s.ach[id] = s.t;
-    log(s, `🏅 Traguardo: ${ACHIEVEMENTS[id].name} (+2% produzione)`, 'good');
+    log(s, t`🏅 Traguardo: ${ACHIEVEMENTS[id].name} (+2% produzione)`, 'good');
   }
   if (s.t - (s.hist.at(-1)?.[0] ?? -99) >= 30) {
     s.hist.push([Math.round(s.t), s.pop, Math.round(r.prod.knowledge)]);

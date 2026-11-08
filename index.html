@@ -15,10 +15,11 @@
     <div class="era"><b id="era-name"></b><span id="year"></span></div>
     <div id="timeline"></div>
     <nav>
-      <button data-act="save">💾 Salva</button>
-      <button data-act="export">📤 Esporta</button>
-      <button data-act="import">📥 Importa</button>
-      <button data-act="newgame">🔄 Nuova partita</button>
+      <button data-act="save" data-t>💾 Salva</button>
+      <button data-act="export" data-t>📤 Esporta</button>
+      <button data-act="import" data-t>📥 Importa</button>
+      <button data-act="newgame" data-t>🔄 Nuova partita</button>
+      <button id="lang"></button>
     </nav>
   </header>
   <canvas id="scene"></canvas>
@@ -28,10 +29,10 @@
       <div class="card">
         <button id="clicker" data-act="click"><span id="click-label"></span><small id="click-value"></small></button>
         <div id="targets" class="chips"></div>
-        <p class="hint">Tastiera: <kbd>Spazio</kbd> o la lettera della risorsa, un click per pressione.</p>
+        <p class="hint" data-t>Tastiera: <kbd>Spazio</kbd> o la lettera della risorsa, un click per pressione.</p>
       </div>
-      <div class="card"><h3>Risorse</h3><div id="resources"></div></div>
-      <div class="card"><h3>Civiltà</h3><div id="meters"></div></div>
+      <div class="card"><h3 data-t>Risorse</h3><div id="resources"></div></div>
+      <div class="card"><h3 data-t>Civiltà</h3><div id="meters"></div></div>
     </aside>
 
     <section id="center">
@@ -41,8 +42,8 @@
 
     <aside id="right">
       <div id="crises"></div>
-      <div class="card"><h3>Effetti attivi</h3><div id="effects"></div></div>
-      <div class="card grow"><h3>Cronaca</h3><div id="log"></div></div>
+      <div class="card"><h3 data-t>Effetti attivi</h3><div id="effects"></div></div>
+      <div class="card grow"><h3 data-t>Cronaca</h3><div id="log"></div></div>
     </aside>
   </main>
 

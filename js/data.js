@@ -1,4 +1,5 @@
 // Ascesa — dati di gioco (risorse, ere, lavori, edifici, tecnologie)
+import { t, lang, localize } from './i18n.js';
 
 export const ERAS = [
   null,
@@ -270,7 +271,7 @@ export const ACHIEVEMENTS = {
   pop10k: { name: 'Nazione', desc: 'Raggiungi 10.000 abitanti.', cond: r10(1e4) },
   pop100k: { name: 'Superpotenza', desc: 'Raggiungi 100.000 abitanti.', cond: r10(1e5) },
   pop1m: { name: 'Ecumenopoli', desc: 'Raggiungi 1 milione di abitanti.', cond: r10(1e6) },
-  ...Object.fromEntries([2, 3, 4, 5, 6, 7, 8].map(e => ['era' + e, { name: `Era ${e}`, desc: `Raggiungi l'era ${e}.`, cond: s => s.era >= e }])),
+  ...Object.fromEntries([2, 3, 4, 5, 6, 7, 8].map(e => ['era' + e, { name: t`Era ${e}`, desc: t`Raggiungi l'era ${e}.`, cond: s => s.era >= e }])),
   click100: { name: 'Mani operose', desc: 'Clicca 100 volte.', cond: s => s.stats.clicks >= 100 },
   click1k: { name: 'Instancabile', desc: 'Clicca 1.000 volte.', cond: s => s.stats.clicks >= 1000 },
   click10k: { name: 'Il dito di Dio', desc: 'Clicca 10.000 volte.', cond: s => s.stats.clicks >= 1e4 },
@@ -287,3 +288,8 @@ export const ACHIEVEMENTS = {
   exotic: { name: 'Alchimia', desc: 'Accumula 100 di materia esotica.', cond: s => s.res.exotic >= 100 },
   survivor: { name: 'Sull\'orlo del baratro', desc: 'Sopravvivi a una rivolta con la stabilità a zero.', cond: s => s.stats.revoltSurvived >= 1 },
 };
+
+[ERAS, RES, JOBS, BUILDINGS, TECHS, DIFFICULTY, VICTORIES].forEach(localize);
+for (const k in ACHIEVEMENTS) if (!/^era\d$/.test(k)) localize(ACHIEVEMENTS[k]); // quelli d'era sono già tradotti
+for (const k in GROUPS) GROUPS[k] = t(GROUPS[k]);
+if (lang === 'en') for (const [k, c] of Object.entries({ food: 'F', wood: 'W', stone: 'S', gold: 'G' })) RES[k].key = c; // tasti per risorsa
