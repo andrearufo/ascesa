@@ -4,7 +4,8 @@
   --good: #6fcf97; --bad: #eb5757; --warn: #f2c94c; --info: #56ccf2;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 Inter, system-ui, sans-serif; min-width: 1100px; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 Inter, system-ui, sans-serif; min-width: 1100px; user-select: none; -webkit-user-select: none; }
+textarea, #log { user-select: text; -webkit-user-select: text; }
 button { font: inherit; color: inherit; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
 button:hover { border-color: var(--accent); }
 button:disabled { opacity: .4; cursor: default; }

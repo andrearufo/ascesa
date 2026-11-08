@@ -162,6 +162,7 @@ function section(P, key, title, items, gridCls = 'grid') {
 }
 
 function renderJobs(P, r) {
+  const steps = [1, 10, ...(S.pop >= 1000 ? [100] : []), ...(S.pop >= 10000 ? [1000] : [])]; // passi più grandi con la popolazione
   const items = Object.keys(JOBS).filter(j => G.has(S, JOBS[j].req)).map(j => {
     const J = JOBS[j], cap = G.jobCap(S, j, r), k = (r.m.jm[j] ?? 1) * (J.power ? r.eff : 1) * G.stabMult(S);
     const out = Object.entries(J.out).map(([res, v]) => `${RES[res].icon} ${fmt(v * k * (r.m.rm[res] ?? 1) * (r.m.rm.all ?? 1))}/s`);
@@ -169,7 +170,7 @@ function renderJobs(P, r) {
     if (J.stab) out.push(`⚖️ +${fmt(J.stab * (r.m.jm[j] ?? 1))}`);
     return { k: j, cls: 'item', html: `<div class="job"><span class="ic">${J.icon}</span>
       <div><b>${J.name}</b> <span class="cnt">${fmt(S.jobs[j])}</span>${cap !== Infinity ? ` <small class="d">${t`/ ${fmt(cap)} posti`}</small>` : ''}<div class="fx">${t`ognuno: ${out.join(' · ')}`}</div></div>
-      <div class="ctl"><button data-act="job:${j}:-1e15">0</button><button data-act="job:${j}:-10">-10</button><button data-act="job:${j}:-1">-1</button><button data-act="job:${j}:1">+1</button><button data-act="job:${j}:10">+10</button><button data-act="job:${j}:1e15">Max</button></div></div>
+      <div class="ctl"><button data-act="job:${j}:-1e15">0</button>${steps.map(n => `<button data-act="job:${j}:-${n}">-${n < 1000 ? n : n / 1000 + "k"}</button>`).reverse().join('')}${steps.map(n => `<button data-act="job:${j}:${n}">+${n < 1000 ? n : n / 1000 + "k"}</button>`).join('')}<button data-act="job:${j}:1e15">Max</button></div></div>
       <div class="d">${J.desc}</div>` };
   });
   section(P, 'jobs', t`Lavori · ${fmt(r.idle)} persone inattive`, items, 'grid one');
