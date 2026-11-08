@@ -26,7 +26,7 @@ nav button { font-size: 12px; }
 
 #scene { display: block; width: 100%; height: 300px; border-bottom: 1px solid var(--line); }
 
-main { display: grid; grid-template-columns: 300px 1fr 320px; gap: 14px; padding: 14px; align-items: start; }
+main { display: grid; grid-template-columns: 320px 1fr 320px; gap: 14px; padding: 14px; align-items: start; }
 aside { display: flex; flex-direction: column; gap: 14px; }
 #right { position: sticky; top: 14px; max-height: calc(100vh - 28px); }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
@@ -47,7 +47,7 @@ aside { display: flex; flex-direction: column; gap: 14px; }
 .res .bar { grid-column: 2 / 4; height: 3px; background: var(--panel2); border-radius: 2px; overflow: hidden; }
 .res .bar i { display: block; height: 100%; background: var(--accent); }
 .res .bar i.full { background: var(--warn); }
-.rate { font-size: 11px; color: var(--muted); grid-column: 2 / 4; display: flex; justify-content: space-between; }
+.rate { font-size: 11px; color: var(--muted); grid-column: 2 / 4; display: flex; justify-content: space-between; gap: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .pos { color: var(--good); } .neg { color: var(--bad); } .wasted { color: var(--warn); }
 
 .meter { margin-bottom: 9px; }
