@@ -43,7 +43,7 @@ export function gameOver(s, id) {
 }
 
 // ---------- razzie
-const RAID = [0, 5, 25, 120, 350, 2500, 20000, 150000, 1.2e6];
+const RAID = [0, 5, 25, 120, 350, 2500, 20000, 150000, 5e6];
 export const threat = s => Math.round(RAID[s.era] * DIFFICULTY[s.difficulty].raid * (1 + Math.min(0.5, (s.t - s.eraStart) / 4800)));
 
 function raid(s, r) {

@@ -99,5 +99,7 @@ for (let i = +(process.argv[4] || 0); i < runs; i++) {
   console.log('   carenze (min):', Object.entries(short).map(([k, v]) => k + '=' + m(v)).join(' ') || 'nessuna');
   console.log('   attesa avanzamento era (min):', Object.entries(wait).filter(([, v]) => v > 120).map(([k, v]) => k + '=' + m(v)).join(' '));
   console.log(`#${i} ${s.won ? 'VITTORIA ' + s.won.id : s.over ? 'SCONFITTA ' + s.over.id : 'TEMPO SCADUTO'} a ${m(s.t)} · era ${s.era} · pop ${Math.round(s.pop)} · ere: ${Object.entries(eras).map(([e, t]) => e + '@' + m(t)).join(' ')}`);
+  const base = ['forager', 'woodcutter', 'quarrier', 'sage'].reduce((a, j) => a + s.jobs[j], 0), sp = (s.buildings.spaceport || 0) * BUILDINGS.spaceport.prod.metal * (r.m.rm.metal ?? 1) * r.m.rm.all * G.stabMult(s);
+  console.log(`   fine: lavori antichi ${Math.round(base / s.pop * 100)}% · spazioporti ${Math.round(sp / r.prod.metal * 100)}% del metallo · scorte ${['food', 'wood', 'stone', 'metal', 'gold'].map(k => k[0] + s.res[k].toExponential(1)).join(' ')} · difesa/minaccia ${(r.def / Math.max(1, threat(s))).toFixed(0)}×`);
   console.log(`   razzie ${s.stats.raidsWon}/${s.stats.raidsLost} · crisi ${s.stats.crisesWon} · stab ${s.stability.toFixed(0)} · inq ${s.pollution.toFixed(0)} · IA ${s.aiRisk.toFixed(0)} · k/s ${r.prod.knowledge.toExponential(1)} · tech ${Object.keys(s.techs).length} · ${s.log.filter(l => l.type === 'bad').slice(0, 2).map(l => l.msg).join(' | ')}`);
 }
