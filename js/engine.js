@@ -314,7 +314,7 @@ export function tick(s, dt, opts = {}) {
   }
   if (s.t - (s.hist.at(-1)?.[0] ?? -99) >= 30) {
     s.hist.push([Math.round(s.t), s.pop, Math.round(r.prod.knowledge)]);
-    if (s.hist.length > 400) s.hist = s.hist.filter((_, i) => i % 2);
+    if (s.hist.length > 400) s.hist = s.hist.filter((_, i) => i % 2 === 0); // dirada tenendo il primo punto
   }
 }
 

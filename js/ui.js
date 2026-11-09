@@ -125,15 +125,30 @@ function renderTabs(r) {
   if (tab === 'stats') renderStats(P, r);
 }
 
+// linea del tempo stile AoE: una fascia colorata per era, con la linea verticale del passaggio
+const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+const KCOL = '#ffd166';
 function chart() {
-  const h = S.hist, w = 600, ht = 120;
+  const h = S.hist, w = Math.max(300, $('panel').clientWidth - 30), ht = 190, top = 22, bot = 18, T = Math.max(1, S.t);
   if (h.length < 2) return `<p class="empty">${t('Il grafico apparirà tra qualche minuto.')}</p>`;
-  const T = h.at(-1)[0] || 1, line = (i, c) => {
+  const X = x => (x / T * w).toFixed(1);
+  const start = e => e === 1 ? 0 : S.techs['era' + e];
+  let svg = '';
+  for (let e = 1; e <= S.era; e++) {
+    const a = start(e), b = e < S.era ? start(e + 1) : T, x0 = +X(a), bw = +X(b) - x0, col = ERAS[e].sky[0], name = ERAS[e].name;
+    if (a === undefined || b === undefined) continue;
+    svg += `<g><title>${name} · ${time(a)}${e < S.era ? ' → ' + time(b) : ''}</title><rect x="${x0}" y="0" width="${Math.max(0, bw)}" height="${ht - bot}" fill="${col}" opacity=".16"/>
+      ${e > 1 ? `<line x1="${x0}" x2="${x0}" y1="0" y2="${ht - bot}" stroke="${col}" stroke-width="2"/>` : ''}
+      <text x="${x0 + 4}" y="14" fill="${col}" font-size="11" font-weight="700">${bw > name.length * 6.5 + 8 ? name : bw > 22 ? ROMAN[e] : ''}</text></g>`;
+  }
+  const line = (i, c) => {
     const max = Math.log10(Math.max(...h.map(p => p[i])) + 1) || 1;
-    return `<polyline fill="none" stroke="${c}" stroke-width="2" points="${h.map(p => `${p[0] / T * w},${ht - Math.log10(p[i] + 1) / max * (ht - 8) - 4}`).join(' ')}"/>`;
+    return `<polyline fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round" points="${h.map(p => `${X(p[0])},${(ht - bot - Math.log10(p[i] + 1) / max * (ht - top - bot)).toFixed(1)}`).join(' ')}"/>`;
   };
-  return `<svg viewBox="0 0 ${w} ${ht}" style="width:100%;height:140px;background:var(--panel2);border-radius:8px">${line(1, 'var(--info)')}${line(2, 'var(--accent)')}</svg>
-    <small class="d"><span style="color:var(--info)">━ ${t('popolazione')}</span> · <span style="color:var(--accent)">━ ${t('conoscenza/s')}</span> ${t('(scala logaritmica)')}</small>`;
+  const step = [60, 300, 600, 1800, 3600, 7200, 10800, 21600].find(v => T / v <= 8) || 43200;
+  for (let x = step; +X(x) < w - 16; x += step) svg += `<text x="${X(x)}" y="${ht - 4}" fill="var(--muted)" font-size="10" text-anchor="middle">${x % 3600 ? Math.round(x / 60) + 'm' : x / 3600 + 'h'}</text>`;
+  return `<svg width="${w}" height="${ht}" viewBox="0 0 ${w} ${ht}" style="display:block;background:var(--panel2);border-radius:8px">${svg}${line(1, 'var(--info)')}${line(2, KCOL)}</svg>
+    <small class="d"><span style="color:var(--info)">━ ${t('popolazione')}</span> · <span style="color:${KCOL}">━ ${t('conoscenza/s')}</span> ${t('(scala logaritmica)')}</small>`;
 }
 
 function renderStats(P, r) {
