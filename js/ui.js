@@ -88,8 +88,8 @@ function render() {
     return { k, cls: 'res', html: `<span>${RES[k].icon}</span><span>${RES[k].name}</span><span class="amt">${fmt(S.res[k])}${cap === Infinity ? '' : ' / ' + fmt(cap)}</span>
       <span class="rate">${pct >= 99.9 && n > 0 ? `<span class="wasted" title="${t('Deposito pieno: questa produzione va persa. Sposta i lavoratori o costruisci depositi.')}">${t`pieno · ${sign(n)}/s persi`}</span>`
         : r.short[k] !== undefined ? `<span class="neg" title="${t`Scorta esaurita: chi consuma questa risorsa lavora solo al ${Math.round(r.short[k] * 100)}%.`}">${t`carenza · edifici al ${Math.round(r.short[k] * 100)}%`}</span>`
-        : `<span class="${n > 0 ? 'pos' : n < 0 ? 'neg' : ''}">${r.useBy[k] ? '= ' : ''}${sign(n)}/s</span>`}
-        ${r.useBy[k] ? `<span title="${[t('▲ produzione · ▼ consumo · = saldo'), ...r.useBy[k].map(([a, v]) => `${a}: −${fmt(v)}/s`)].join('\n')}">▲ ${fmt(r.prod[k])} ▼ ${fmt(r.cons[k])}</span>` : ''}</span>
+        : `<span class="${n > 0 ? 'pos' : n < 0 ? 'neg' : ''}">= ${sign(n)}/s</span>`}
+        <span title="${[t('▲ produzione · ▼ consumo · = saldo'), ...(r.useBy[k] || []).map(([a, v]) => `${a}: −${fmt(v)}/s`)].join('\n')}">▲ ${fmt(r.prod[k])} ▼ ${fmt(r.cons[k])}</span></span>
       ${cap === Infinity ? '' : `<div class="bar"><i class="${pct >= 99.9 ? 'full' : ''}" style="width:${pct}%"></i></div>`}` };
   }));
 
