@@ -738,4 +738,7 @@ export default {
   "Sei stato via {0}. Nel frattempo la tua civiltà ha prodotto:": "You were away for {0}. Meanwhile your civilization produced:",
   "Durante l'assenza non avvengono eventi e il tempo delle crisi è sospeso (massimo 4 ore).": "While you're away no events happen and crisis timers are paused (4 hours max).",
   "Continua": "Continue",
+  "𝕏 Condividi il risultato": "𝕏 Share your result",
+  "🏆 Ho portato la mia civiltà dalla preistoria a «{0}» in {1} su Ascesa ({2}). Ci riesci anche tu?": "🏆 I took my civilization from the Stone Age to “{0}” in {1} in Ascesa ({2}). Can you beat it?",
+  "{0} La mia civiltà è caduta nell'era «{1}»: {2}. Riesci a fare di meglio?": "{0} My civilization fell in era “{1}”: {2}. Can you do better?",
 };

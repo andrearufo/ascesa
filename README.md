@@ -1,61 +1,85 @@
-# Ascesa — dalla pietra alle stelle
+<div align="center">
 
-Clicker/idle game di civiltà in JavaScript puro (nessuna dipendenza, nessuna build).
-Guida una tribù dalla preistoria fino a un futuro iper-tecnologico.
+# 🔥 Ascesa — from stone to the stars
 
-**Gioca:** https://andrearufo.github.io/ascesa/
+**Lead a tribe from the Stone Age to a Dyson sphere.**
+A free civilization clicker/idle game that runs in your browser: no install, no account, no ads.
 
-In italiano e in inglese (*Italian and English*): la lingua segue quella del browser e si cambia con il pulsante 🌐 in alto.
+### [▶ Play now](https://andrearufo.github.io/ascesa/)
 
-## Come si gioca
+![Ascesa: a prehistoric camp and a hyper-tech city](assets/og.png)
 
-- **Clicca** per raccogliere la risorsa selezionata; il click cresce con la tua produzione.
-  Da tastiera: `Spazio` per la risorsa selezionata, oppure `C` cibo, `L` legno, `P` pietra, `M` metallo, `O` oro, `K` conoscenza (in inglese `F`, `W`, `S`, `M`, `G`, `K`). Conta una pressione alla volta: tenere premuto non raccoglie nulla.
-- **Assegna i lavori**: raccoglitori, taglialegna, cavatori, saggi, soldati… e poi contadini, minatori, studiosi, operai, scienziati, tecnici IA, ingegneri quantistici.
-- **Costruisci** alloggi, magazzini (le capacità limitano i costi raggiungibili!), centrali, laboratori.
-- **Gestisci i consumi**: alcuni edifici consumano risorse (fucine e centrali a carbone il legno, teatri e centrali petrolifere l'oro, centrali nucleari il metallo, spazioporti pietra e legno…). Se una scorta finisce, quegli edifici rendono solo in proporzione. Il pannello Risorse mostra produzione, consumo e saldo.
-- **Ricerca** oltre 100 tecnologie in 8 ere e compi **8 scelte esclusive** (tribù, governo, economia, questione sociale, energia, ideologia, IA, destino).
-  Ogni ricerca richiede tempo (da 15 s nella Preistoria a 4 minuti nell'ultima era, il triplo per il passaggio d'era). Puoi metterne in coda altre, anche quelle che dipendono da ricerche ancora in corso: si pagano subito, quando le metti in coda, e se le togli riavrai le risorse.
-- **Vinci** completando uno dei tre megaprogetti dell'ultima era: *Sfera di Dyson*, *Arca Stellare* o *Ascensione Digitale*.
+![Vanilla JS](https://img.shields.io/badge/vanilla-JS-f7df1e) ![Zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen) ![No build step](https://img.shields.io/badge/build-none-blue) ![English · Italiano](https://img.shields.io/badge/lang-EN%20%C2%B7%20IT-orange)
 
-## Le ere
+</div>
 
-Preistoria → Età Antica → Medioevo → Rinascimento → Era Industriale → Era Atomica → Era dell'Informazione → Era Iper-tecnologica
+## Why you'll lose an evening to it
 
-## Cosa può distruggere la civiltà
+- **8 eras, 102 technologies, 62 buildings, 14 jobs.** Hunters and sages become farmers, workers, scientists, AI technicians and quantum engineers.
+- **8 irreversible choices** shape your run: tribe, government, economy, labor, energy, ideology, your stance on AI, and your destiny.
+- **Civilizations can fall.** Famine, revolts, raids, the Black Death, the Great War, the missile crisis, climate collapse, a rogue AI and an incoming asteroid can each end your game.
+- **Three ways to win:** build a *Dyson sphere*, launch a *Star Ark*, or upload everyone in a *Digital Ascension*.
+- **33 random events**, 9 of them with tough choices: refugees at the gates, heresy, general strikes, an AI breakthrough you may not be ready for…
+- **A living scene:** the landscape grows from tents and campfires to arcologies and spaceports, with day and night, smog, snow and blackouts.
+- **Long-term progression:** legacy points carry over between runs, plus 29 achievements, 3 difficulty levels and up to 4 hours of offline progress.
 
-| Pericolo | Come evitarlo |
-|---|---|
-| Carestia → estinzione | saldo del cibo positivo |
-| Stabilità a 0 per 30 s → rivolta | templi, teatri, parchi, scelte di governo, niente disoccupazione |
-| Razzie e invasioni | soldati e fortificazioni (la minaccia cresce con il tempo) |
-| Inquinamento al 100% → collasso climatico | parchi, depuratori, cattura del carbonio, energie pulite |
-| Rischio IA al 100% → presa di potere | istituti di allineamento, governance prudente |
-| Crisi a tempo (Peste Nera, Grande Guerra, Crisi dei missili, Pandemia, IA fuori controllo, Asteroide) | pagarle prima della scadenza; alcune sono letali |
+![Late game: hyper-tech era](assets/screenshot.png)
 
-Oltre 30 eventi casuali, alcuni con scelte (migranti, eresie, scioperi, svolte nelle IA, anomalie quantistiche…).
+## How to play
 
-## Progressione a lungo termine
+1. **Click** (or press `Space`, or the resource's letter) to gather. Holding a key doesn't count: every press is a click.
+2. **Assign jobs** to your people. Keep food positive, or they starve.
+3. **Build** housing, storage, workshops, power plants and labs. Storage caps limit what you can afford, so plan ahead.
+4. **Research** technologies. Each one takes time, and you can queue several (paid up front).
+5. **Survive.** Watch stability, defense, pollution and AI risk, and pay off timed crises before they hit.
+6. **Win** by completing one of the three megaprojects of the last era.
 
-- **Salvataggio automatico** in `localStorage` ogni 15 s, con esportazione/importazione.
-- **Progressi offline** fino a 4 ore (senza eventi).
-- **Eredità**: a fine partita (vittoria o sconfitta) guadagni punti che danno +3% di produzione per punto nelle partite successive.
-- **29 traguardi**, ognuno +2% di produzione.
-- **3 difficoltà**: Facile, Normale, Difficile.
+Your game saves automatically in the browser. Use 📤 Export to move it to another device.
 
-## Struttura
+## Under the hood
+
+Under 2,500 lines of plain JavaScript modules. No framework, no bundler, no npm packages.
 
 ```
 index.html, style.css
-js/data.js     dati: risorse, lavori, edifici, tecnologie, traguardi
-js/engine.js   motore (senza DOM): economia, popolazione, stabilità, salvataggio
-js/events.js   eventi, razzie, crisi, sconfitte
-js/scene.js    scena animata su canvas
-js/ui.js       interfaccia
-js/i18n.js     lingua: t`testo` traduce dall'italiano con il dizionario di js/en.js
-test/i18n.js   controlla che ogni testo abbia la traduzione inglese
-test/sim.js    controllo dei dati + bot che gioca partite intere per il bilanciamento
+js/data.js     game data: resources, jobs, buildings, technologies, achievements
+js/engine.js   DOM-free engine: economy, population, stability, saving
+js/events.js   events, raids, crises, endings
+js/scene.js    animated canvas scene
+js/ui.js       interface
+js/i18n.js     t`text` translates the Italian source text through js/en.js
+test/sim.js    data checks + a greedy bot that plays whole games to test the balance
+test/i18n.js   makes sure every text has an English translation
 ```
 
-Bilanciamento: `node test/sim.js 4 normal` fa giocare 4 partite a un bot greedy e stampa
-i tempi di arrivo a ogni era e l'esito. Su Normale il bot vince in circa 6–9 ore di gioco.
+The engine never touches the DOM, so a bot can play thousands of simulated hours in node to check the balance:
+
+```bash
+node test/sim.js 4 normal
+```
+
+On Normal the bot wins in about 5–9 hours of game time.
+
+To run it locally, serve the folder with any static server, for example `python3 -m http.server`, and open it in a browser.
+
+## Feedback
+
+Found a bug, a broken strategy or a balance issue? [Open an issue](https://github.com/andrearufo/ascesa/issues), ideally with your save code from 📤 Export.
+If you enjoyed it, a ⭐ helps other people find the game.
+
+---
+
+<details>
+<summary>🇮🇹 In italiano</summary>
+
+**Ascesa** è un gioco di civiltà clicker/idle, gratuito, che gira nel browser: guidi una tribù dalla preistoria fino a un futuro iper-tecnologico.
+La lingua segue quella del browser e si cambia con il pulsante 🌐 in alto.
+
+- **Clicca** (o premi `Spazio`, o `C` cibo, `L` legno, `P` pietra, `M` metallo, `O` oro, `K` conoscenza) per raccogliere.
+- **Assegna i lavori**, **costruisci**, **ricerca** oltre 100 tecnologie in 8 ere, con 8 scelte esclusive.
+- **Sopravvivi** a carestie, rivolte, razzie, epidemie, guerre, inquinamento, IA ribelli e asteroidi.
+- **Vinci** completando la Sfera di Dyson, l'Arca Stellare o l'Ascensione Digitale.
+
+**Gioca:** https://andrearufo.github.io/ascesa/
+
+</details>

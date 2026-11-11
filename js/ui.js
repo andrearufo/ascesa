@@ -259,8 +259,13 @@ function endModal(e, won) {
   G.saveLegacy(L); G.save(S);
   modal(`<h2>${e.icon} ${e.title}</h2><p>${e.text}</p>${won ? `<p><b>${t`🏆 Hai vinto in ${time(S.t)}!`}</b></p>` : ''}${statsHTML()}
     <p>${t`🏺 Guadagni <b>${pts}</b> punti eredità (totale ${L.points}): la prossima civiltà partirà con <b>+${L.points * 3}%</b> di produzione.`}</p>
-    <div class="actions"><button data-act="newgame">${t('Nuova partita')}</button></div>`, 'over');
+    <div class="actions"><button data-act="share">${t('𝕏 Condividi il risultato')}</button><button data-act="newgame">${t('Nuova partita')}</button></div>`, 'over');
+  const d = DIFFICULTY[S.difficulty].name, dur = `${Math.floor(S.t / 3600)}h ${Math.floor(S.t / 60) % 60}m`;
+  shareText = won ? t`🏆 Ho portato la mia civiltà dalla preistoria a «${e.title}» in ${dur} su Ascesa (${d}). Ci riesci anche tu?`
+    : t`${e.icon} La mia civiltà è caduta nell'era «${ERAS[S.era].name}»: ${e.title}. Riesci a fare di meglio?`;
 }
+let shareText = '';
+const GAME_URL = 'https://andrearufo.github.io/ascesa/';
 
 function checkModals() {
   if (!$('modal').hidden) return;
@@ -313,6 +318,7 @@ function act(a, ev) {
   if (k === 'save') { G.save(S); G.log(S, t('💾 Partita salvata.')); }
   if (k === 'lang') { G.save(S); localStorage.setItem(LANG_KEY, x); location.reload(); }
   if (k === 'newgame') newGameModal();
+  if (k === 'share') window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(GAME_URL)}`, '_blank', 'noopener');
   if (k === 'start') { S = G.newState(x, L.points); G.log(S, t('🔥 Una piccola tribù si raduna attorno al fuoco. Assegna i lavori e sopravvivi!'), 'era'); G.save(S); closeModal(); }
   if (k === 'export') modal(`<h2>${t('Esporta')}</h2><p>${t('Copia questo codice per salvare la partita altrove.')}</p><textarea readonly>${btoa(unescape(encodeURIComponent(JSON.stringify(S))))}</textarea><div class="actions"><button data-act="close">${t('Chiudi')}</button></div>`);
   if (k === 'import') modal(`<h2>${t('Importa')}</h2><p>${t('Incolla un codice esportato. La partita attuale verrà sostituita.')}</p><textarea id="imp"></textarea><div class="actions"><button data-act="doimport">${t('Importa')}</button><button data-act="close">${t('Annulla')}</button></div>`);
