@@ -9,7 +9,7 @@ A free civilization clicker/idle game that runs in your browser: no install, no 
 
 ![Ascesa: a prehistoric camp and a hyper-tech city](assets/og.png)
 
-![Vanilla JS](https://img.shields.io/badge/vanilla-JS-f7df1e) ![Zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen) ![No build step](https://img.shields.io/badge/build-none-blue) ![English · Italiano](https://img.shields.io/badge/lang-EN%20%C2%B7%20IT-orange)
+![Vanilla JS](https://img.shields.io/badge/vanilla-JS-f7df1e) ![Zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen) ![No build step](https://img.shields.io/badge/build-none-blue) ![English · Italiano](https://img.shields.io/badge/lang-EN%20%C2%B7%20IT-orange) [![MIT License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
 </div>
 
@@ -66,6 +66,10 @@ To run it locally, serve the folder with any static server, for example `python3
 
 Found a bug, a broken strategy or a balance issue? [Open an issue](https://github.com/andrearufo/ascesa/issues), ideally with your save code from 📤 Export.
 If you enjoyed it, a ⭐ helps other people find the game.
+
+## License
+
+[MIT](LICENSE): play it, fork it, mod it.
 
 ---
 
