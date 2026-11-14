@@ -6,6 +6,7 @@ import { EVENTS, CRISES, ENDINGS, choose, resolveCrisis } from './events.js';
 import { t, lang, LANG_KEY } from './i18n.js';
 
 const $ = id => document.getElementById(id);
+const TITLE = t(document.title);
 let S = null, L = G.loadLegacy(), tab = 'jobs';
 
 // ---------- formattazione
@@ -72,6 +73,8 @@ function render() {
   if (!S) return;
   const r = G.calc(S);
   document.documentElement.style.setProperty('--accent', ERAS[S.era].sky[0]);
+  const title = (S.crises.length ? '🚨 ' : S.choice ? '❓ ' : '') + TITLE; // si vede anche con la scheda in secondo piano
+  if (document.title !== title) document.title = title;
   $('era-name').textContent = ERAS[S.era].name;
   $('year').textContent = `${G.year(S)} · ${DIFFICULTY[S.difficulty].name} · ⏱ ${time(S.t)}`;
   list($('timeline'), ERAS.slice(1).map((e, i) => ({ k: i, cls: i + 1 < S.era ? 'done' : i + 1 === S.era ? 'now' : '', html: '', attr: `title="${e.name}"` })));
@@ -268,12 +271,17 @@ let shareText = '';
 const GAME_URL = 'https://andrearufo.github.io/ascesa/';
 
 function checkModals() {
+  if ($('modal').dataset.k === 'choice') {
+    if (!S.choice || S.over || S.won) closeModal();
+    else $('choice-left').textContent = time(Math.max(0, S.choice.left));
+  }
   if (!$('modal').hidden) return;
   if (S.over) return endModal(ENDINGS[S.over.id], false);
   if (S.won) return endModal(VICTORIES[S.won.id], true);
   if (S.choice) {
     const e = EVENTS[S.choice.id];
-    modal(`<h2>${e.title}</h2><p>${e.text}</p><p class="d">${t('Il tempo è fermo finché non decidi.')}</p><div class="actions">${e.options.map((o, i) => `<button data-act="choose:${i}">${o.label}<small>${o.desc}</small></button>`).join('')}</div>`);
+    modal(`<h2>${e.title}</h2><p>${e.text}</p><p class="d">${t`⏳ Il tempo continua a scorrere. Se non decidi entro <b id="choice-left">${time(Math.max(0, S.choice.left))}</b> la scelta sarà «${e.options[e.safe].label}».`}</p>
+      <div class="actions">${e.options.map((o, i) => `<button data-act="choose:${i}">${o.label}<small>${o.desc}</small></button>`).join('')}</div>`, 'choice');
     return;
   }
   if (S.eraUp) {
@@ -323,10 +331,9 @@ function act(a, ev) {
   if (k === 'export') modal(`<h2>${t('Esporta')}</h2><p>${t('Copia questo codice per salvare la partita altrove.')}</p><textarea readonly>${btoa(unescape(encodeURIComponent(JSON.stringify(S))))}</textarea><div class="actions"><button data-act="close">${t('Chiudi')}</button></div>`);
   if (k === 'import') modal(`<h2>${t('Importa')}</h2><p>${t('Incolla un codice esportato. La partita attuale verrà sostituita.')}</p><textarea id="imp"></textarea><div class="actions"><button data-act="doimport">${t('Importa')}</button><button data-act="close">${t('Annulla')}</button></div>`);
   if (k === 'doimport') {
-    try {
-      localStorage.setItem(G.SAVE_KEY, decodeURIComponent(escape(atob($('imp').value.trim()))));
-      S = G.load(); closeModal();
-    } catch { alert(t('Codice non valido')); }
+    let s2 = null; // prima si controlla, poi si sostituisce la partita
+    try { const raw = decodeURIComponent(escape(atob($('imp').value.trim()))); s2 = G.load({ getItem: () => raw }); G.calc(s2); } catch { s2 = null; }
+    if (s2) { S = s2; G.save(S); closeModal(); } else alert(t('Codice non valido'));
   }
   render();
 }
@@ -348,26 +355,28 @@ document.addEventListener('keyup', () => $('clicker').classList.remove('pressed'
 
 // ---------- ciclo principale
 document.documentElement.lang = lang;
-document.title = t(document.title);
+document.title = TITLE;
 for (const el of document.querySelectorAll('[data-t]')) el.innerHTML = t(el.innerHTML.trim());
 $('lang').textContent = lang === 'it' ? '🌐 English' : '🌐 Italiano';
 $('lang').dataset.act = 'lang:' + (lang === 'it' ? 'en' : 'it');
+function welcome(off) {
+  if (!off || !$('modal').hidden) return;
+  modal(`<h2>${t('🌙 Bentornato')}</h2><p>${t`Sei stato via ${time(off.sec)}. Nel frattempo la tua civiltà ha prodotto:`}</p>
+    <div class="stats">${Object.entries(off.gain).filter(([, v]) => Math.abs(v) >= 1).map(([k, v]) => `<span>${RES[k].icon} ${RES[k].name}</span><b>${sign(v)}</b>`).join('')}<span>${t('👥 Popolazione')}</span><b>${sign(off.pop)}</b></div>
+    <p class="d">${t("Durante l'assenza non avvengono eventi e il tempo di crisi e decisioni è sospeso (massimo 8 ore).")}</p><div class="actions"><button data-act="close">${t('Continua')}</button></div>`);
+}
 S = G.load();
 if (!S) newGameModal();
-else {
-  const off = G.offline(S);
-  if (off) modal(`<h2>${t('🌙 Bentornato')}</h2><p>${t`Sei stato via ${time(off.sec)}. Nel frattempo la tua civiltà ha prodotto:`}</p>
-    <div class="stats">${Object.entries(off.gain).filter(([, v]) => Math.abs(v) >= 1).map(([k, v]) => `<span>${RES[k].icon} ${RES[k].name}</span><b>${sign(v)}</b>`).join('')}<span>${t('👥 Popolazione')}</span><b>${sign(off.pop)}</b></div>
-    <p class="d">${t("Durante l'assenza non avvengono eventi e il tempo delle crisi è sospeso (massimo 4 ore).")}</p><div class="actions"><button data-act="close">${t('Continua')}</button></div>`);
-}
+else welcome(G.offline(S));
 initScene($('scene'), () => S);
 globalThis.ascesa = { get state() { return S; } }; // accesso da console per debug
-let last = performance.now();
+let last = Date.now();
 setInterval(() => {
-  const now = performance.now();
-  let dt = Math.min(60, (now - last) / 1000);
+  const now = Date.now(), gap = (now - last) / 1000;
   last = now;
-  if (S) while (dt > 0) { G.tick(S, Math.min(dt, 1)); dt -= 1; }
+  // scheda sospesa o computer in standby: vale come un'assenza, non va perso
+  if (S && gap > 120) { welcome(G.offline(S)); G.save(S); }
+  else if (S) for (let dt = gap; dt > 0; dt -= 1) G.tick(S, Math.min(dt, 1));
   render();
 }, 200);
 setInterval(() => S && G.save(S), 15000);

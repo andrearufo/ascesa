@@ -95,68 +95,71 @@ export const EVENTS = {
   solar_storm: { era: [7, 8], w: 1, run: s => { addTemp(s, 'storm', '🌞 Tempesta solare', 90, { energy: 0.5 }, true); return t('🌞 Una tempesta solare manda in tilt le reti elettriche.'); } },
 
   // --- eventi con scelta
-  flood: { era: [2, 4], w: 1.5, title: '🌊 Piena del fiume', text: 'Il fiume sta per esondare sui campi.',
+  flood: { era: [2, 4], w: 1.5, safe: 0, title: '🌊 Piena del fiume', text: 'Il fiume sta per esondare sui campi.',
     options: [
       { label: 'Costruisci argini', desc: 'Costa il 30% della pietra', run: s => { s.res.stone *= 0.7; return t('🌊 Gli argini reggono.'); } },
       { label: 'Lascia che esondi', desc: 'Perdi alcune fattorie, ma il limo fertilizza i campi', run: s => { const d = destroy(s, ['farm'], 2); addTemp(s, 'silt', '🌱 Limo fertile', 300, { rm: { food: 1.4 } }); return t`🌊 L'esondazione distrugge ${d} fattorie ma rende la terra fertile.`; } },
     ] },
-  traders: { era: [2, 5], w: 1.5, title: '🐪 Mercanti stranieri', text: 'Una carovana propone uno scambio.',
+  traders: { era: [2, 5], w: 1.5, safe: 2, title: '🐪 Mercanti stranieri', text: 'Una carovana propone uno scambio.',
     options: [
       { label: 'Scambia legno per oro', desc: '-40% legno, +oro', run: (s, r) => { const w = s.res.wood * 0.4; s.res.wood -= w; s.seen.gold = 1; s.res.gold = Math.min(r.caps.gold, s.res.gold + w * 0.5); return t('🐪 Scambio concluso.'); } },
       { label: 'Scambia cibo per conoscenza', desc: '-40% cibo, +conoscenza', run: (s, r) => { const f = s.res.food * 0.4; s.res.food -= f; s.res.knowledge += f * 0.5; return t('🐪 I mercanti condividono i loro saperi.'); } },
       { label: 'Rifiuta', desc: 'Nessun effetto', run: () => t('🐪 La carovana prosegue.') },
     ] },
-  migrants: { era: [2, 7], w: 1.5, title: '🧳 Migranti alle porte', text: 'Un gruppo di profughi chiede di entrare nella tua civiltà.',
+  migrants: { era: [2, 7], w: 1.5, safe: 1, title: '🧳 Migranti alle porte', text: 'Un gruppo di profughi chiede di entrare nella tua civiltà.',
     options: [
       { label: 'Accoglili', desc: '+10% popolazione, stabilità -6 per 3 minuti', run: s => { const n = Math.ceil(s.pop * 0.1); s.pop += n; addTemp(s, 'mig', '🧳 Tensioni sociali', 180, { stab: -6 }, true); return t`🧳 Accolti ${n} migranti.`; } },
       { label: 'Respingili', desc: 'Stabilità +3 per 2 minuti', run: s => { addTemp(s, 'mig2', '🚧 Confini chiusi', 120, { stab: 3 }); return t('🧳 I migranti vengono respinti.'); } },
     ] },
-  heresy: { era: [3, 4], w: 1.5, title: '📜 Eresia', text: 'Un predicatore mette in dubbio le verità consolidate.',
+  heresy: { era: [3, 4], w: 1.5, safe: 1, title: '📜 Eresia', text: 'Un predicatore mette in dubbio le verità consolidate.',
     options: [
       { label: 'Tollera', desc: 'Conoscenza ×1,3 ma stabilità -8 per 3 minuti', run: s => { addTemp(s, 'her', '📜 Libero pensiero', 180, { rm: { knowledge: 1.3 }, stab: -8 }); return t('📜 Le nuove idee si diffondono.'); } },
       { label: 'Perseguita', desc: 'Stabilità +5 ma conoscenza ×0,7 per 3 minuti', run: s => { addTemp(s, 'her', '⛓️ Inquisizione', 180, { rm: { knowledge: 0.7 }, stab: 5 }); return t("📜 L'eresia viene soffocata."); } },
     ] },
-  crusade: { era: [3, 3], w: 1, title: '⚔️ Appello alla guerra santa', text: 'I regni vicini ti chiedono di unirti a una spedizione lontana.',
+  crusade: { era: [3, 3], w: 1, safe: 1, title: '⚔️ Appello alla guerra santa', text: 'I regni vicini ti chiedono di unirti a una spedizione lontana.',
     options: [
       { label: 'Partecipa', desc: 'Perdi metà dei soldati, guadagni oro e stabilità', run: (s, r) => { const n = Math.floor(s.jobs.soldier / 2); s.jobs.soldier -= n; killPop(s, n); s.res.gold = Math.min(r.caps.gold, s.res.gold + r.caps.gold * 0.5); addTemp(s, 'cru', '⚔️ Gloria', 240, { stab: 8 }); return t`⚔️ ${n} soldati non tornano, ma il bottino è ricco.`; } },
       { label: 'Rifiuta', desc: 'Stabilità -6 per 2 minuti', run: s => { addTemp(s, 'cru', '😠 Disonore', 120, { stab: -6 }, true); return t('⚔️ Il popolo mormora di codardia.'); } },
     ] },
-  strike: { era: [5, 6], w: s => (s.techs.lab_unions ? 0 : 2), title: '✊ Sciopero generale', text: 'Gli operai incrociano le braccia e chiedono salari migliori.',
+  strike: { era: [5, 6], w: s => (s.techs.lab_unions ? 0 : 2), safe: 0, title: '✊ Sciopero generale', text: 'Gli operai incrociano le braccia e chiedono salari migliori.',
     options: [
       { label: 'Concedi aumenti', desc: '-25% oro, stabilità +5', run: s => { s.res.gold *= 0.75; addTemp(s, 'str', '🤝 Accordo sindacale', 240, { stab: 5 }); return t('✊ Accordo raggiunto.'); } },
       { label: 'Reprimi', desc: 'Operai ×0,5 per 1 minuto, stabilità -15 per 3 minuti', run: s => { addTemp(s, 'str', '🚔 Repressione', 180, { stab: -15 }, true); addTemp(s, 'str2', '🏭 Fabbriche ferme', 60, { jm: { worker: 0.5 } }, true); return t('✊ Lo sciopero viene represso nel sangue.'); } },
     ] },
-  fake_news: { era: [7, 8], w: 1.5, title: '📱 Ondata di disinformazione', text: 'Notizie false polarizzano la società.',
+  fake_news: { era: [7, 8], w: 1.5, safe: 0, title: '📱 Ondata di disinformazione', text: 'Notizie false polarizzano la società.',
     options: [
       { label: 'Censura', desc: 'Stabilità +4, conoscenza ×0,8 per 3 minuti', run: s => { addTemp(s, 'fn', '🔇 Censura', 180, { stab: 4, rm: { knowledge: 0.8 } }); return t('📱 Le piattaforme vengono oscurate.'); } },
       { label: 'Libertà di stampa', desc: 'Stabilità -12 per 2 minuti', run: s => { addTemp(s, 'fn', '📱 Polarizzazione', 120, { stab: -12 }, true); return t('📱 Il dibattito infuria.'); } },
     ] },
-  ai_breakthrough: { era: [7, 8], w: 1.5, title: '🧠 Svolta nelle IA', text: 'Un laboratorio ha creato un modello molto più potente dei precedenti.',
+  ai_breakthrough: { era: [7, 8], w: 1.5, safe: 1, title: '🧠 Svolta nelle IA', text: 'Un laboratorio ha creato un modello molto più potente dei precedenti.',
     options: [
       { label: 'Distribuiscilo subito', desc: 'Conoscenza ×2 per 5 minuti, Rischio IA +12', run: s => { addTemp(s, 'aib', '🧠 Super-modello', 300, { rm: { knowledge: 2 } }); s.aiRisk = Math.min(100, s.aiRisk + 12); return t('🧠 Il nuovo modello rivoluziona la ricerca.'); } },
       { label: 'Studialo prima', desc: 'Rischio IA -5', run: s => { s.aiRisk = Math.max(0, s.aiRisk - 5); return t('🧠 Il modello resta in laboratorio.'); } },
     ] },
-  anomaly: { era: [8, 8], w: 1.5, title: '🌀 Anomalia quantistica', text: 'Un esperimento ha aperto una fessura nello spazio-tempo.',
+  anomaly: { era: [8, 8], w: 1.5, safe: 1, title: '🌀 Anomalia quantistica', text: 'Un esperimento ha aperto una fessura nello spazio-tempo.',
     options: [
       { label: 'Indaga', desc: '70%: +materia esotica · 30%: catastrofe', run: s => { if (Math.random() < 0.7) { s.res.exotic += 40 + s.buildings.quantum_fab * 5; return t('🌀 Raccolta materia esotica dalla fessura!'); } return t`🌀 La fessura collassa: ${killPop(s, pct(s, 0.1))} vittime.`; } },
       { label: 'Sigilla', desc: 'Nessun rischio', run: () => t('🌀 La fessura viene sigillata.') },
     ] },
 };
 
-export function choose(s, i, r) {
+// le scelte non fermano il tempo: allo scadere vale l'opzione prudente (safe)
+export const CHOICE_TIME = 180;
+export function choose(s, i, r, auto) {
   const e = EVENTS[s.choice?.id];
   if (!e) return;
   s.choice = null;
+  if (auto) log(s, t`⏳ Nessuna decisione presa: «${e.options[i].label}».`, 'warn');
   const msg = e.options[i].run(s, r);
   if (msg) log(s, msg, 'warn');
 }
 
 function randomEvent(s, r) {
-  const pool = Object.entries(EVENTS).map(([id, e]) => [id, e, s.era >= e.era[0] && s.era <= e.era[1] ? (typeof e.w === 'function' ? e.w(s) : e.w) : 0]).filter(x => x[2] > 0);
+  const pool = Object.entries(EVENTS).map(([id, e]) => [id, e, s.era >= e.era[0] && s.era <= e.era[1] && !(e.options && s.choice) ? (typeof e.w === 'function' ? e.w(s) : e.w) : 0]).filter(x => x[2] > 0);
   let roll = Math.random() * pool.reduce((a, x) => a + x[2], 0);
   const [id, e] = pool.find(x => (roll -= x[2]) <= 0) || pool[0];
   s.stats.events++;
-  if (e.options) { s.choice = { id }; return; }
+  if (e.options) { s.choice = { id, left: CHOICE_TIME }; return; }
   const msg = e.run(s, r);
   if (msg) log(s, msg, e.good ? 'good' : 'bad');
 }
@@ -201,6 +204,7 @@ function endCrisis(s, id, msg, r) {
 export function runEvents(s, dt, r, opts) {
   if (opts.offline) return;
   s.threat = s.era >= 1 && s.t > 240 ? threat(s) : 0;
+  if (s.choice && (s.choice.left = (s.choice.left ?? CHOICE_TIME) - dt) <= 0) choose(s, EVENTS[s.choice.id].safe, r, true);
 
   // sconfitte
   if (s.pop <= 0) return gameOver(s, 'extinction');

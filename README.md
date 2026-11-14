@@ -21,7 +21,7 @@ A free civilization clicker/idle game that runs in your browser: no install, no 
 - **Three ways to win:** build a *Dyson sphere*, launch a *Star Ark*, or upload everyone in a *Digital Ascension*.
 - **33 random events**, 9 of them with tough choices: refugees at the gates, heresy, general strikes, an AI breakthrough you may not be ready for…
 - **A living scene:** the landscape grows from tents and campfires to arcologies and spaceports, with day and night, smog, snow and blackouts.
-- **Long-term progression:** legacy points carry over between runs, plus 29 achievements, 3 difficulty levels and up to 4 hours of offline progress.
+- **Long-term progression:** legacy points carry over between runs, plus 29 achievements, 3 difficulty levels and up to 8 hours of offline progress.
 
 ![Late game: hyper-tech era](assets/screenshot.png)
 

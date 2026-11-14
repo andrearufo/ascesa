@@ -10,7 +10,7 @@ import { CRISES, EVENTS, choose, resolveCrisis, threat } from '../js/events.js';
 for (const [id, t] of Object.entries(TECHS)) for (const q of t.req || []) assert(q.startsWith('group:') || TECHS[q], `${id}: req ${q}`);
 for (const [id, b] of Object.entries(BUILDINGS)) { assert(!b.req || TECHS[b.req], `${id}: req ${b.req}`); for (const k in b.cost) assert(RES[k], `${id}: cost ${k}`); }
 for (const [id, j] of Object.entries(JOBS)) assert(!j.req || TECHS[j.req], `${id}: req`);
-for (const e of Object.values(EVENTS)) assert(e.run || e.options);
+for (const [id, e] of Object.entries(EVENTS)) assert(e.run || e.options?.[e.safe], `${id}: serve run oppure options con safe valido`);
 console.log(`dati ok: ${Object.keys(TECHS).length} tecnologie, ${Object.keys(BUILDINGS).length} edifici, ${Object.keys(EVENTS).length} eventi, ${Object.keys(ACHIEVEMENTS).length} traguardi`);
 
 const m = t => `${Math.round(t / 60)}m`;

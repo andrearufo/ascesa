@@ -1,6 +1,6 @@
 // Ascesa — motore di gioco (nessun accesso al DOM: gira anche in node per i test)
-import { RES, JOBS, BUILDINGS, TECHS, ERAS, ACHIEVEMENTS, DIFFICULTY } from './data.js';
-import { runEvents } from './events.js';
+import { RES, JOBS, BUILDINGS, TECHS, ERAS, ACHIEVEMENTS, DIFFICULTY, VICTORIES } from './data.js';
+import { runEvents, EVENTS, CRISES, ENDINGS } from './events.js';
 import { t, t as tr } from './i18n.js';
 
 export const SAVE_KEY = 'ascesa_save_v1';
@@ -272,7 +272,7 @@ export function year(s) {
 
 // ---------- tick
 export function tick(s, dt, opts = {}) {
-  if (s.over || s.won || s.choice) return;
+  if (s.over || s.won) return;
   s.t += dt;
   if (s.research && (s.research.left -= dt) <= 0) { complete(s, s.research.id); s.research = null; }
   startNext(s);
@@ -318,10 +318,10 @@ export function tick(s, dt, opts = {}) {
   }
 }
 
-// progressi mentre il gioco era chiuso (max 4 ore, senza eventi)
+// progressi mentre il gioco era chiuso o sospeso (max 8 ore, senza eventi)
 export function offline(s) {
-  const sec = Math.min(4 * 3600, (Date.now() - s.last) / 1000);
-  if (sec < 60 || s.over || s.won || s.choice) return null;
+  const sec = Math.min(8 * 3600, (Date.now() - s.last) / 1000);
+  if (sec < 60 || s.over || s.won) return null;
   const before = { ...s.res }, pop = s.pop;
   for (let t = sec; t > 0; t -= 10) tick(s, Math.min(10, t), { offline: true });
   return { sec, gain: Object.fromEntries(keys(RES).map(k => [k, s.res[k] - before[k]])), pop: s.pop - pop };
@@ -343,13 +343,31 @@ export function save(s, store = globalThis.localStorage) {
   s.last = Date.now();
   store.setItem(SAVE_KEY, JSON.stringify(s));
 }
+// i salvataggi possono arrivare da altri (📥 Importa): via < e > dai testi, numeri dove servono numeri, solo id noti.
+// Tutto ciò che finisce nell'HTML passa da qui.
 export function load(store = globalThis.localStorage) {
   try {
-    const d = JSON.parse(store.getItem(SAVE_KEY));
+    const d = JSON.parse(store.getItem(SAVE_KEY), (k, v) => typeof v === 'string' ? v.replace(/[<>]/g, '') : v);
     if (!d) return null;
-    const base = newState(d.difficulty, d.legacy);
-    for (const k of ['res', 'jobs', 'buildings', 'stats']) d[k] = { ...base[k], ...d[k] };
-    return { ...base, ...d };
+    const base = newState(DIFFICULTY[d.difficulty] ? d.difficulty : 'normal', +d.legacy || 0);
+    for (const k of ['res', 'jobs', 'buildings', 'stats']) d[k] = Object.fromEntries(keys(base[k]).map(id => [id, +(d[k]?.[id] ?? base[k][id]) || 0]));
+    const s = { ...base, ...d, difficulty: base.difficulty, legacy: base.legacy };
+    for (const k of ['t', 'pop', 'stability', 'pollution', 'aiRisk', 'last']) s[k] = +s[k] || 0;
+    for (const k of ['techs', 'seen', 'ach', 'crisesDone']) if (!s[k] || typeof s[k] !== 'object') s[k] = base[k];
+    for (const k of ['log', 'temp', 'crises', 'hist', 'queue']) if (!Array.isArray(s[k])) s[k] = [];
+    s.era = ERAS[s.era] ? +s.era : 1;
+    s.techs = Object.fromEntries(Object.entries(s.techs).filter(([id]) => TECHS[id]).map(([id, v]) => [id, +v || 0]));
+    s.queue = s.queue.filter(id => TECHS[id]);
+    s.crises = s.crises.filter(c => CRISES[c?.id]);
+    s.temp = s.temp.filter(e => e && typeof e.fx === 'object' && e.fx);
+    s.log = s.log.filter(l => typeof l?.msg === 'string').map(l => ({ t: +l.t || 0, msg: l.msg, type: /^\w+$/.test(l.type) ? l.type : 'info' }));
+    if (!TECHS[s.research?.id]) s.research = null;
+    if (!EVENTS[s.choice?.id]) s.choice = null;
+    if (!ENDINGS[s.over?.id]) s.over = null;
+    if (!VICTORIES[s.won?.id]) s.won = null;
+    if (!ERAS[s.eraUp]) s.eraUp = null;
+    if (!RES[s.clickTarget]) s.clickTarget = 'food';
+    return s;
   } catch { return null; }
 }
 export function loadLegacy(store = globalThis.localStorage) {
