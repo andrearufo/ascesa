@@ -22,6 +22,7 @@ A free civilization clicker/idle game that runs in your browser, on desktop and 
 - **33 random events**, 9 of them with tough choices: refugees at the gates, heresy, general strikes, an AI breakthrough you may not be ready for…
 - **A living scene:** the landscape grows from tents and campfires to arcologies and spaceports, with day and night, smog, snow and blackouts.
 - **Every run is different:** pick one of three random civilization traits at the start, spend legacy points on permanent perks or keep them for a production bonus, and take on optional challenges for more points.
+- **Friendly to idle play:** research unlocks auto-gathering and lets you pin a job for idle people, lucky finds appear in the scene for a free bonus, and after a defeat you can restart from the beginning of the current era.
 - **Long-term progression:** 29 achievements, 3 difficulty levels and up to 8 hours of offline progress.
 
 ![Late game: hyper-tech era](assets/screenshot.png)

@@ -27,6 +27,19 @@ function destroy(s, ids, n) {
 const housingIds = ['hut', 'house', 'aqueduct', 'townhouse', 'tenement', 'apartment', 'skyscraper', 'arcology'];
 const prodFor = (s, r, k, sec) => Math.max(10, r.prod[k] * sec);
 
+// ---------- doni: compaiono nella scena per 30 secondi; chi li clicca ci guadagna, chi li perde non perde nulla
+export const GIFTS = {
+  star: { icon: '🌟', run: (s, r) => { s.res.knowledge += prodFor(s, r, 'knowledge', 90); return t`🌠 Una stella cadente ispira i saggi: conoscenza guadagnata.`; } },
+  bounty: { icon: '🌈', run: (s, r) => { for (const k of ['food', 'wood', 'stone', 'metal', 'gold']) if (s.seen[k]) s.res[k] = Math.max(s.res[k], Math.min(r.caps[k], s.res[k] + prodFor(s, r, k, 60))); return t`🌈 Una stagione generosa riempie i depositi.`; } },
+  calm: { icon: '🕊️', run: s => { addTemp(s, 'gift_calm', 'Giorni sereni', 120, { stab: 6 }); return t`🕊️ Giorni sereni: stabilità +6 per due minuti.`; } },
+};
+export function claimGift(s, r) {
+  const g = GIFTS[s.gift?.id];
+  if (!g || s.over || s.won) return;
+  s.gift = null;
+  log(s, g.run(s, r), 'good');
+}
+
 // ---------- finali negativi
 export const ENDINGS = {
   extinction: { icon: '💀', title: 'Estinzione', text: "L'ultimo membro della tua civiltà è scomparso. Le rovine verranno riscoperte da qualcun altro, un giorno." },
@@ -203,6 +216,8 @@ function endCrisis(s, id, msg, r) {
 // ---------- chiamato a ogni tick
 export function runEvents(s, dt, r, opts) {
   if (opts.offline) return;
+  if (s.gift && (s.gift.left -= dt) <= 0) s.gift = null;
+  if ((s.nextGift -= dt) <= 0) { s.nextGift = rnd(150, 300); s.gift = { id: pick(Object.keys(GIFTS)), x: rnd(0.08, 0.92), y: rnd(0.15, 0.6), left: 30 }; }
   s.threat = s.era >= 1 && s.t > 240 ? threat(s) : 0;
   if (s.choice && (s.choice.left = (s.choice.left ?? CHOICE_TIME) - dt) <= 0) choose(s, EVENTS[s.choice.id].safe, r, true);
 

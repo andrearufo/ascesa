@@ -21,6 +21,14 @@ for (const o of [PERKS, TRAITS, CHALLENGES]) for (const [id, x] of Object.entrie
   const s = G.newState('normal', 0, { challenge: 'barren' }); s.won = { id: 'dyson' };
   assert(G.endRun(s, L) === 15 * CHALLENGES.barren.pts && L.challenges.barren && L.wins === 1);
 }
+{ // ripartenza: dopo una sconfitta si torna all'inizio dell'era, con meno punti eredità; a punti incassati non si torna più
+  const a = G.newState(); a.research = { id: 'era2', left: 0, total: 1 }; G.tick(a, 1); G.tick(a, 60);
+  assert(a.era === 2 && a.checkpoint && !G.rewind(a), 'checkpoint al cambio d\'era, niente ripartenza senza sconfitta');
+  a.over = { id: 'famine' };
+  const b = G.rewind(a);
+  assert(b && b.era === 2 && !b.over && b.t < a.t && b.rewinds === 1 && b.checkpoint === a.checkpoint && G.runPoints({ ...b, era: 8 }) < G.runPoints({ ...a, era: 8 }));
+  G.endRun(a, G.loadLegacy({ getItem: () => null })); assert(!G.rewind(a));
+}
 console.log(`dati ok: ${Object.keys(TECHS).length} tecnologie, ${Object.keys(BUILDINGS).length} edifici, ${Object.keys(EVENTS).length} eventi, ${Object.keys(ACHIEVEMENTS).length} traguardi`);
 
 const m = t => `${Math.round(t / 60)}m`;

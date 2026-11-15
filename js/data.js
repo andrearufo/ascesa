@@ -143,8 +143,8 @@ export const TECHS = {
   pottery: { era: 2, name: 'Ceramica', cost: { knowledge: 300 }, fx: { foodCons: 0.9 }, desc: 'Sblocca il Granaio.' },
   masonry: { era: 2, name: 'Lavorazione della pietra', cost: { knowledge: 350 }, fx: { jm: { quarrier: 1.5 } }, desc: 'Sblocca Case e Magazzini.' },
   bronze: { era: 2, name: 'Bronzo', cost: { knowledge: 500, stone: 200 }, req: ['masonry'], fx: {}, desc: 'Sblocca Miniere, Minatori e il Metallo.' },
-  writing: { era: 2, name: 'Scrittura', cost: { knowledge: 600 }, req: ['pottery'], fx: { clickPct: 0.02 }, desc: 'Sblocca Biblioteche e Studiosi.' },
-  wheel: { era: 2, name: 'Ruota', cost: { knowledge: 700 }, req: ['masonry'], fx: { jm: { woodcutter: 1.25, quarrier: 1.25, farmer: 1.25 } }, desc: 'Trasporti più rapidi.' },
+  writing: { era: 2, name: 'Scrittura', cost: { knowledge: 600 }, req: ['pottery'], fx: { clickPct: 0.02 }, desc: 'Sblocca Biblioteche e Studiosi. Con 📌 mandi gli inattivi al lavoro che scegli.' },
+  wheel: { era: 2, name: 'Ruota', cost: { knowledge: 700 }, req: ['masonry'], fx: { jm: { woodcutter: 1.25, quarrier: 1.25, farmer: 1.25 }, auto: 1 }, desc: 'Trasporti più rapidi: la risorsa scelta si raccoglie anche da sola.' },
   currency: { era: 2, name: 'Moneta', cost: { knowledge: 800, metal: 50 }, req: ['bronze', 'writing'], fx: {}, desc: "Sblocca Mercati, Mercanti e l'Oro." },
   bronze_weapons: { era: 2, name: 'Armi di bronzo', cost: { knowledge: 900, metal: 100 }, req: ['bronze'], fx: { def: 2 }, desc: 'Sblocca la Caserma.' },
   irrigation: { era: 2, name: 'Irrigazione', cost: { knowledge: 1000 }, req: ['agriculture', 'wheel'], fx: { jm: { farmer: 1.5 } }, desc: 'Campi più fertili.' },
@@ -187,7 +187,7 @@ export const TECHS = {
   era5: { era: 4, advance: 5, name: 'Verso la Rivoluzione industriale', cost: { knowledge: 600000, gold: 30000, metal: 30000, wood: 30000 }, req: ['physics', 'banking', 'gunpowder', 'architecture', 'exploration'], desc: 'Il vapore cambia ogni cosa.' },
 
   // ===== ERA 5
-  steam: { era: 5, name: 'Macchina a vapore', cost: { knowledge: 1e6 }, fx: {}, desc: "Sblocca Fabbriche, Operai, Centrali a carbone e l'Energia." },
+  steam: { era: 5, name: 'Macchina a vapore', cost: { knowledge: 1e6 }, fx: { auto: 1 }, desc: "Sblocca Fabbriche, Operai, Centrali a carbone e l'Energia." },
   urbanization: { era: 5, name: 'Urbanizzazione', cost: { knowledge: 1.2e6 }, fx: { housing: 1.25 }, desc: 'Sblocca il Casermone operaio.' },
   steel: { era: 5, name: 'Acciaio', cost: { knowledge: 1.2e6, metal: 50000 }, req: ['steam'], fx: { def: 1.5 }, desc: 'Sblocca Acciaierie e Depositi industriali.' },
   railways: { era: 5, name: 'Ferrovie', cost: { knowledge: 1.4e6 }, req: ['steel'], fx: { jm: { worker: 1.25 } }, desc: 'Sblocca la Ferrovia.' },
@@ -220,7 +220,7 @@ export const TECHS = {
   // ===== ERA 7
   internet: { era: 7, name: 'Internet', cost: { knowledge: 9e7 }, fx: {}, desc: 'Sblocca Data center e Tecnici IA. Attenzione al Rischio IA!' },
   genetics: { era: 7, name: 'Genetica', cost: { knowledge: 1.05e8 }, fx: { rm: { food: 2 }, growth: 1.3 }, desc: 'Colture e corpi riprogettati.' },
-  robotics: { era: 7, name: 'Robotica', cost: { knowledge: 1.2e8 }, fx: { jm: { worker: 3, miner: 3, farmer: 2 } }, desc: 'Sblocca gli Hub automatizzati.' },
+  robotics: { era: 7, name: 'Robotica', cost: { knowledge: 1.2e8 }, fx: { jm: { worker: 3, miner: 3, farmer: 2 }, auto: 1 }, desc: 'Sblocca gli Hub automatizzati.' },
   drones: { era: 7, name: 'Droni', cost: { knowledge: 1.35e8 }, req: ['robotics'], fx: { def: 5 }, desc: 'Guerra automatizzata.' },
   ml: { era: 7, name: 'Apprendimento automatico', cost: { knowledge: 1.5e8 }, req: ['internet'], fx: { jm: { technician: 2 }, ai: 1.5 }, desc: 'Le macchine imparano. Il Rischio IA cresce più in fretta.' },
   alignment: { era: 7, name: "Allineamento dell'IA", cost: { knowledge: 1.65e8 }, req: ['ml'], fx: { ai: 0.7 }, desc: "Sblocca l'Istituto di allineamento." },

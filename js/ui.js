@@ -2,7 +2,7 @@
 import { RES, JOBS, BUILDINGS, TECHS, ERAS, GROUPS, DIFFICULTY, ACHIEVEMENTS, VICTORIES, PERKS, TRAITS, CHALLENGES } from './data.js';
 import * as G from './engine.js';
 import { initScene } from './scene.js';
-import { EVENTS, CRISES, ENDINGS, choose, resolveCrisis } from './events.js';
+import { EVENTS, CRISES, ENDINGS, GIFTS, choose, resolveCrisis, claimGift } from './events.js';
 import { t, lang, LANG_KEY } from './i18n.js';
 
 const $ = id => document.getElementById(id);
@@ -46,7 +46,7 @@ function tFx(fx = {}) {
   const p = [];
   for (const j in fx.jm || {}) p.push(`${JOBS[j].icon} ${JOBS[j].name} ${mul(fx.jm[j])}`);
   for (const k in fx.rm || {}) p.push(`${k === 'all' ? t('🌐 Tutta la produzione') : RES[k].icon + ' ' + RES[k].name} ${mul(fx.rm[k])}`);
-  const L = { stab: ['⚖️ Stabilità', sign], housing: ['🏠 Alloggi', mul], cap: ['📦 Capacità', mul], def: ['🛡️ Difesa', mul], pol: ['🏭 Inquinamento', mul], ai: ['🤖 Rischio IA', mul], growth: ['👶 Crescita', mul], click: ['👆 Click', mul], clickPct: ['👆 Click', v => t`+${v * 100}% della produzione/s`], loot: ['💰 Bottini', mul], foodCons: ['🍽️ Consumo cibo', mul], energy: ['⚡ Energia', mul] };
+  const L = { stab: ['⚖️ Stabilità', sign], housing: ['🏠 Alloggi', mul], cap: ['📦 Capacità', mul], def: ['🛡️ Difesa', mul], pol: ['🏭 Inquinamento', mul], ai: ['🤖 Rischio IA', mul], growth: ['👶 Crescita', mul], click: ['👆 Click', mul], auto: ['⚙️ Raccolta automatica', v => t`+${v} click/s`], clickPct: ['👆 Click', v => t`+${v * 100}% della produzione/s`], loot: ['💰 Bottini', mul], foodCons: ['🍽️ Consumo cibo', mul], energy: ['⚡ Energia', mul] };
   for (const k in L) if (fx[k] !== undefined) p.push(`${t(L[k][0])} ${L[k][1](fx[k])}`);
   if (fx.shield) p.push(t('🛡️ Protegge da: ') + fx.shield.map(x => SHIELD[x]).join(', '));
   return p.join(' · ');
@@ -82,7 +82,9 @@ function render() {
   // click
   if (!G.clickTargets(S).includes(S.clickTarget)) S.clickTarget = 'food';
   $('click-label').textContent = CLICK[S.clickTarget];
-  $('click-value').textContent = `+${fmt(G.clickValue(S, r))} ${RES[S.clickTarget].name.toLowerCase()}`;
+  $('click-value').textContent = `+${fmt(G.clickValue(S, r))} ${RES[S.clickTarget].name.toLowerCase()}` + (r.m.auto ? ` · ⚙️ ${r.m.auto}/s` : '');
+  $('gift').hidden = !S.gift;
+  if (S.gift) { $('gift').textContent = GIFTS[S.gift.id].icon; $('gift').style.left = S.gift.x * 100 + '%'; $('gift').style.top = S.gift.y * 100 + '%'; }
   list($('targets'), G.clickTargets(S).map(k => ({ k, html: `<button data-act="target:${k}" class="${S.clickTarget === k ? 'on' : ''}">${RES[k].icon} ${RES[k].name} <kbd>${RES[k].key}</kbd></button>` })));
 
   // risorse
@@ -190,7 +192,7 @@ function renderJobs(P, r) {
     if (J.stab) out.push(`⚖️ +${fmt(J.stab * (r.m.jm[j] ?? 1))}`);
     return { k: j, cls: 'item', html: `<div class="job"><span class="ic">${J.icon}</span>
       <div><b>${J.name}</b> <span class="cnt">${fmt(S.jobs[j])}</span>${cap !== Infinity ? ` <small class="d">${t`/ ${fmt(cap)} posti`}</small>` : ''}<div class="fx">${t`ognuno: ${out.join(' · ')}`}</div></div>
-      <div class="ctl"><button data-act="job:${j}:-1e15">0</button>${steps.map(n => `<button data-act="job:${j}:-${n}">-${n < 1000 ? n : n / 1000 + "k"}</button>`).reverse().join('')}${steps.map(n => `<button data-act="job:${j}:${n}">+${n < 1000 ? n : n / 1000 + "k"}</button>`).join('')}<button data-act="job:${j}:1e15">Max</button></div></div>
+      <div class="ctl"><button data-act="job:${j}:-1e15">0</button>${steps.map(n => `<button data-act="job:${j}:-${n}">-${n < 1000 ? n : n / 1000 + "k"}</button>`).reverse().join('')}${steps.map(n => `<button data-act="job:${j}:${n}">+${n < 1000 ? n : n / 1000 + "k"}</button>`).join('')}<button data-act="job:${j}:1e15">Max</button>${G.canAutoJob(S) ? `<button data-act="auto:${j}" class="${S.autoJob === j ? 'on' : ''}" title="${t('Manda qui chi resta inattivo')}">📌</button>` : ''}</div></div>
       <div class="d">${J.desc}</div>` };
   });
   section(P, 'jobs', t`Lavori · ${fmt(r.idle)} persone inattive`, items, 'grid one');
@@ -258,14 +260,16 @@ function statsHTML() {
   const pickRow = (l, o) => o ? row(l, `${o.icon} ${o.name} <small class="d">${tFx(o.fx)}</small>`) : '';
   return `<div class="stats">${pickRow('Indole', TRAITS[S.trait])}${pickRow('Sfida', CHALLENGES[S.challenge])}${row('Era raggiunta', ERAS[S.era].name)}${row('Tempo di gioco', time(S.t))}${row('Popolazione massima', fmt(st.maxPop))}
     ${row('Tecnologie scoperte', Object.keys(S.techs).length)}${row('Razzie respinte / subite', `${st.raidsWon} / ${st.raidsLost}`)}${row('Eventi vissuti', st.events)}
-    ${row('Morti totali', fmt(st.died))}${row('Click', fmt(st.clicks))}</div>`;
+    ${row('Morti totali', fmt(st.died))}${row('Click', fmt(st.clicks))}${S.rewinds ? row('Ripartenze', S.rewinds) : ''}</div>`;
 }
 function endModal(e, won) {
-  const pts = G.endRun(S, L);
+  // sconfitta con un'era da cui ripartire: i punti eredità si incassano solo scegliendo «Nuova partita»
+  const back = !won && !S.legacyAwarded && S.checkpoint, pts = back ? G.runPoints(S) : G.endRun(S, L);
   G.saveLegacy(L); G.save(S);
   modal(`<h2>${e.icon} ${e.title}</h2><p>${e.text}</p>${won ? `<p><b>${t`🏆 Hai vinto in ${time(S.t)}!`}</b></p>` : ''}${statsHTML()}
-    <p>${t`🏺 Guadagni <b>${pts}</b> punti eredità (ne hai ${L.points}). Tienili per <b>+${L.points * 3}%</b> di produzione o spendili nella Bottega all'inizio della prossima partita.`}</p>
-    <div class="actions"><button data-act="share">${t('𝕏 Condividi il risultato')}</button><button data-act="newgame">${t('Nuova partita')}</button></div>`, 'over');
+    <p>${back ? t`🏺 Questa partita vale <b>${pts}</b> punti eredità: li incassi iniziando una nuova partita. Oppure riparti dall'inizio dell'era e riprova.`
+      : t`🏺 Guadagni <b>${pts}</b> punti eredità (ne hai ${L.points}). Tienili per <b>+${L.points * 3}%</b> di produzione o spendili nella Bottega all'inizio della prossima partita.`}</p>
+    <div class="actions">${back ? `<button data-act="rewind">${t`↩️ Riparti da: ${ERAS[S.era].name}`}<small>${t`punti eredità ${mul(0.75)}`}</small></button>` : ''}<button data-act="share">${t('𝕏 Condividi il risultato')}</button><button data-act="newgame">${t('Nuova partita')}</button></div>`, 'over');
   const d = DIFFICULTY[S.difficulty].name, dur = `${Math.floor(S.t / 3600)}h ${Math.floor(S.t / 60) % 60}m`;
   shareText = won ? t`🏆 Ho portato la mia civiltà dalla preistoria a «${e.title}» in ${dur} su Ascesa (${d}). Ci riesci anche tu?`
     : t`${e.icon} La mia civiltà è caduta nell'era «${ERAS[S.era].name}»: ${e.title}. Riesci a fare di meglio?`;
@@ -342,13 +346,16 @@ function act(a, ev) {
   if (k === 'crisis') resolveCrisis(S, x, G.calc(S));
   if (k === 'save') { G.save(S); G.log(S, t('💾 Partita salvata.')); }
   if (k === 'lang') { G.save(S); localStorage.setItem(LANG_KEY, x); location.reload(); }
-  if (k === 'newgame') newGameModal();
+  if (k === 'newgame') { if (S?.over || S?.won) { G.endRun(S, L); G.saveLegacy(L); G.save(S); } newGameModal(); }
+  if (k === 'rewind') { const c = G.rewind(S); if (c) { S = c; G.save(S); closeModal(); } }
+  if (k === 'gift') claimGift(S, G.calc(S));
+  if (k === 'auto') S.autoJob = S.autoJob === x ? null : x;
   if (k === 'share') window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(GAME_URL)}`, '_blank', 'noopener');
   if (k === 'perk') { G.buyPerk(L, x); G.saveLegacy(L); newGameModal(); }
   if (k === 'trait') { pick.trait = x; newGameModal(); }
   if (k === 'ch') { pick.ch = pick.ch === x ? null : x; newGameModal(); }
   if (k === 'start') { S = G.newState(x, L.points, { perks: L.perks, trait: pick.trait, challenge: pick.ch }); delete L.offer; pick.ch = null; G.saveLegacy(L); G.log(S, t('🔥 Una piccola tribù si raduna attorno al fuoco. Assegna i lavori e sopravvivi!'), 'era'); G.save(S); closeModal(); }
-  if (k === 'export') modal(`<h2>${t('Esporta')}</h2><p>${t('Copia questo codice per salvare la partita altrove.')}</p><textarea readonly>${btoa(unescape(encodeURIComponent(JSON.stringify(S))))}</textarea><div class="actions"><button data-act="close">${t('Chiudi')}</button></div>`);
+  if (k === 'export') modal(`<h2>${t('Esporta')}</h2><p>${t('Copia questo codice per salvare la partita altrove.')}</p><textarea readonly>${btoa(unescape(encodeURIComponent(JSON.stringify({ ...S, checkpoint: null }))))}</textarea><div class="actions"><button data-act="close">${t('Chiudi')}</button></div>`);
   if (k === 'import') modal(`<h2>${t('Importa')}</h2><p>${t('Incolla un codice esportato. La partita attuale verrà sostituita.')}</p><textarea id="imp"></textarea><div class="actions"><button data-act="doimport">${t('Importa')}</button><button data-act="close">${t('Annulla')}</button></div>`);
   if (k === 'doimport') {
     let s2 = null; // prima si controlla, poi si sostituisce la partita

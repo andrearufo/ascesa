@@ -1,6 +1,6 @@
 // Ascesa — motore di gioco (nessun accesso al DOM: gira anche in node per i test)
 import { RES, JOBS, BUILDINGS, TECHS, ERAS, ACHIEVEMENTS, DIFFICULTY, VICTORIES, PERKS, TRAITS, CHALLENGES } from './data.js';
-import { runEvents, EVENTS, CRISES, ENDINGS } from './events.js';
+import { runEvents, EVENTS, CRISES, ENDINGS, GIFTS } from './events.js';
 import { t, t as tr } from './i18n.js';
 
 export const SAVE_KEY = 'ascesa_save_v1';
@@ -15,6 +15,7 @@ export function newState(difficulty = 'normal', legacy = 0, o = {}) {
   return {
     v: 1, t: 0, difficulty, era: 1, eraStart: 0, legacy,
     perks: { ...o.perks }, trait: o.trait || null, challenge: o.challenge || null,
+    autoJob: null, gift: null, nextGift: 120, checkpoint: null, rewinds: 0,
     res: { ...Object.fromEntries(keys(RES).map(r => [r, 0])), food: 40, wood: 10 },
     pop: 3, growthAcc: 0, starveAcc: 0,
     jobs: { ...Object.fromEntries(keys(JOBS).map(j => [j, 0])), forager: 2 },
@@ -38,12 +39,12 @@ export const groupTaken = (s, g) => keys(s.techs).find(id => TECHS[id].group ===
 
 // ---------- modificatori
 export function mods(s) {
-  const m = { jm: {}, rm: {}, stab: 0, housing: 1, cap: 1, def: 1, pol: 1, ai: 1, growth: 1, click: 1, clickPct: 0.01, loot: 1, foodCons: 1, energy: 1, shield: new Set() };
+  const m = { jm: {}, rm: {}, stab: 0, housing: 1, cap: 1, def: 1, pol: 1, ai: 1, growth: 1, click: 1, clickPct: 0.01, auto: 0, loot: 1, foodCons: 1, energy: 1, shield: new Set() };
   const apply = fx => {
     for (const k in fx) {
       const v = fx[k];
       if (k === 'jm' || k === 'rm') for (const x in v) m[k][x] = (m[k][x] ?? 1) * v[x];
-      else if (k === 'stab' || k === 'clickPct') m[k] += v;
+      else if (k === 'stab' || k === 'clickPct' || k === 'auto') m[k] += v;
       else if (k === 'shield') v.forEach(x => m.shield.add(x));
       else m[k] *= v;
     }
@@ -168,6 +169,8 @@ export function assign(s, j, n, r = calc(s)) {
   return n;
 }
 
+export const canAutoJob = s => has(s, 'writing');
+
 // ---------- click
 export function clickTargets(s) {
   return ['food', 'wood', 'stone', 'metal', 'gold', 'knowledge'].filter(k =>
@@ -263,6 +266,7 @@ function complete(s, id) {
   if (t.advance) {
     s.era = t.advance; s.eraStart = s.t; s.eraUp = t.advance;
     log(s, tr`🌅 Inizia l'era: ${ERAS[t.advance].name}!`, 'era');
+    s.checkpoint = null; s.checkpoint = JSON.stringify(s); // da qui si riparte dopo una sconfitta (vedi rewind)
   } else log(s, tr`🔬 Scoperta: ${t.name}`, 'tech');
 }
 
@@ -278,11 +282,11 @@ export function year(s) {
 export function tick(s, dt, opts = {}) {
   if (s.over || s.won) return;
   s.t += dt;
-  if (s.research && (s.research.left -= dt) <= 0) { complete(s, s.research.id); s.research = null; }
+  if (s.research && (s.research.left -= dt) <= 0) { const id = s.research.id; s.research = null; complete(s, id); }
   startNext(s);
-  const r = calc(s);
+  const r = calc(s), auto = r.m.auto * clickValue(s, r); // raccolta automatica: click al secondo sulla risorsa scelta
   for (const k in RES) {
-    s.res[k] = clamp(s.res[k] + r.net[k] * dt, 0, Math.max(r.caps[k], 0));
+    s.res[k] = clamp(s.res[k] + (r.net[k] + (k === s.clickTarget ? auto : 0)) * dt, 0, Math.max(r.caps[k], 0));
     if (s.res[k] > 0) s.seen[k] = 1;
   }
   // fame
@@ -307,6 +311,7 @@ export function tick(s, dt, opts = {}) {
   }
   s.stats.maxPop = Math.max(s.stats.maxPop, s.pop);
   fixJobs(s, r);
+  if (JOBS[s.autoJob] && canAutoJob(s)) assign(s, s.autoJob, s.pop - employed(s), r); // 📌 gli inattivi vanno al lavoro scelto
   s.stability = clamp(s.stability + (r.stabTarget - s.stability) * Math.min(1, dt * 0.05), 0, 100);
   s.pollution = clamp(s.pollution + (r.pol - 0.02) * dt, 0, 100);
   s.aiRisk = clamp(s.aiRisk + r.ai * dt, 0, 100);
@@ -332,14 +337,27 @@ export function offline(s) {
 }
 
 // punti eredità a fine partita
+export function runPoints(s) {
+  const k = { easy: 0.5, normal: 1, hard: 1.5 }[s.difficulty] * (CHALLENGES[s.challenge]?.pts ?? 1) * 0.75 ** s.rewinds;
+  return Math.max(1, Math.round(((s.era - 1) * 2 + (s.won ? 15 : 0) + Object.keys(s.ach).length * 0.25) * k));
+}
 export function endRun(s, L) {
   if (s.legacyAwarded) return s.legacyPts;
   s.legacyAwarded = true;
-  const k = { easy: 0.5, normal: 1, hard: 1.5 }[s.difficulty] * (CHALLENGES[s.challenge]?.pts ?? 1);
-  const pts = Math.max(1, Math.round(((s.era - 1) * 2 + (s.won ? 15 : 0) + Object.keys(s.ach).length * 0.25) * k));
+  const pts = runPoints(s);
   L.points += pts; L.runs++; L.best = Math.max(L.best, s.era);
   if (s.won) { L.wins++; L.endings[s.won.id] = 1; if (s.challenge) L.challenges[s.challenge] = 1; }
   return (s.legacyPts = pts);
+}
+
+// dopo una sconfitta si può ripartire dall'inizio dell'era in corso, finché i punti eredità non sono stati incassati.
+// Ogni ripartenza toglie un quarto dei punti eredità della partita (vedi runPoints).
+export function rewind(s) {
+  const c = s.over && !s.legacyAwarded && s.checkpoint ? load({ getItem: () => s.checkpoint }) : null;
+  if (!c) return null;
+  c.checkpoint = s.checkpoint; c.rewinds = s.rewinds + 1; c.last = Date.now();
+  log(c, tr`↩️ La storia si riavvolge: si riparte dall'inizio dell'era.`, 'era');
+  return c;
 }
 
 // ---------- salvataggio
@@ -356,7 +374,7 @@ export function load(store = globalThis.localStorage) {
     const base = newState(DIFFICULTY[d.difficulty] ? d.difficulty : 'normal', +d.legacy || 0);
     for (const k of ['res', 'jobs', 'buildings', 'stats']) d[k] = Object.fromEntries(keys(base[k]).map(id => [id, +(d[k]?.[id] ?? base[k][id]) || 0]));
     const s = { ...base, ...d, difficulty: base.difficulty, legacy: base.legacy };
-    for (const k of ['t', 'pop', 'stability', 'pollution', 'aiRisk', 'last']) s[k] = +s[k] || 0;
+    for (const k of ['t', 'pop', 'stability', 'pollution', 'aiRisk', 'last', 'nextGift']) s[k] = +s[k] || 0;
     for (const k of ['techs', 'seen', 'ach', 'crisesDone']) if (!s[k] || typeof s[k] !== 'object') s[k] = base[k];
     for (const k of ['log', 'temp', 'crises', 'hist', 'queue']) if (!Array.isArray(s[k])) s[k] = [];
     s.era = ERAS[s.era] ? +s.era : 1;
@@ -373,6 +391,10 @@ export function load(store = globalThis.localStorage) {
     if (!RES[s.clickTarget]) s.clickTarget = 'food';
     s.perks = Object.fromEntries(keys(PERKS).map(id => [id, clamp(Math.floor(+d.perks?.[id] || 0), 0, PERKS[id].max)]));
     if (!TRAITS[s.trait]) s.trait = null;
+    if (!JOBS[s.autoJob]) s.autoJob = null;
+    s.gift = GIFTS[s.gift?.id] ? { id: s.gift.id, x: clamp(+s.gift.x || 0, 0, 1), y: clamp(+s.gift.y || 0, 0, 1), left: +s.gift.left || 0 } : null;
+    s.rewinds = Math.max(0, Math.floor(+s.rewinds || 0));
+    if (typeof s.checkpoint !== 'string') s.checkpoint = null;
     if (!CHALLENGES[s.challenge]) s.challenge = null;
     return s;
   } catch { return null; }
