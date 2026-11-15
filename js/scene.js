@@ -214,10 +214,11 @@ function draw(s, t) {
 export function initScene(canvas, getState) {
   ctx = canvas.getContext('2d');
   const fit = () => {
-    const dpr = devicePixelRatio || 1;
-    W = canvas.clientWidth;
-    canvas.width = W * dpr; canvas.height = H * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // la scena è disegnata alta H: se il CSS la fa più bassa (telefono) si rimpicciolisce tutta
+    const dpr = devicePixelRatio || 1, k = canvas.clientHeight / H || 1;
+    W = canvas.clientWidth / k;
+    canvas.width = canvas.clientWidth * dpr; canvas.height = canvas.clientHeight * dpr;
+    ctx.setTransform(dpr * k, 0, 0, dpr * k, 0, 0);
     genMountains();
   };
   addEventListener('resize', fit); fit();

@@ -3,7 +3,7 @@
 # 🔥 Ascesa — from stone to the stars
 
 **Lead a tribe from the Stone Age to a Dyson sphere.**
-A free civilization clicker/idle game that runs in your browser: no install, no account, no ads.
+A free civilization clicker/idle game that runs in your browser, on desktop and phone: no install, no account, no ads.
 
 ### [▶ Play now](https://andrearufo.github.io/ascesa/)
 

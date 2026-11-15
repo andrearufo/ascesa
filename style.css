@@ -4,9 +4,9 @@
   --good: #6fcf97; --bad: #eb5757; --warn: #f2c94c; --info: #56ccf2;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 Inter, system-ui, sans-serif; min-width: 1100px; user-select: none; -webkit-user-select: none; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 Inter, system-ui, sans-serif; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
 textarea, #log { user-select: text; -webkit-user-select: text; }
-button { font: inherit; color: inherit; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+button { touch-action: manipulation; font: inherit; color: inherit; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
 button:hover { border-color: var(--accent); }
 button:disabled { opacity: .4; cursor: default; }
 h3 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
@@ -118,3 +118,37 @@ aside { display: flex; flex-direction: column; gap: 14px; }
 .box textarea { width: 100%; height: 120px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 8px; font: 11px monospace; }
 .stats { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; font-size: 13px; }
 .grid.one { grid-template-columns: 1fr; }
+
+/* ---------- schermi stretti: una colonna sola */
+@media (max-width: 1100px) {
+  main { grid-template-columns: 280px 1fr; }
+  #right { grid-column: 1 / -1; position: static; max-height: none; }
+}
+@media (max-width: 800px) {
+  header { flex-wrap: wrap; gap: 8px 12px; padding: 8px 10px; }
+  .brand { font-size: 20px; }
+  .era { min-width: 0; flex: 1; }
+  #timeline { order: 3; flex-basis: 100%; }
+  nav { flex-basis: 100%; flex-wrap: wrap; gap: 3px; }
+  nav button { flex: 1 0 auto; padding: 6px 2px; font-size: 11px; white-space: nowrap; }
+  #scene { height: 180px; }
+  main { display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 10px; }
+  aside { gap: 10px; }
+  #right { display: contents; }
+  #crises { order: -1; display: flex; flex-direction: column; gap: 10px; }
+  #crises:empty { display: none; }
+  .tabs { overflow-x: auto; gap: 4px; position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 6px 0; margin-bottom: 6px; }
+  .tabs > div { flex: 1 0 auto; }
+  .tabs button { padding: 8px 5px; font-size: 13px; white-space: nowrap; width: 100%; }
+  .job { grid-template-columns: 30px 1fr; }
+  .job .ctl { grid-column: 1 / -1; flex-wrap: wrap; }
+  .job .ctl button { flex: 1; padding: 8px 4px; }
+  .box { padding: 16px; width: 94%; }
+  .box h2 { font-size: 21px; }
+  .box .actions button { min-width: 120px; }
+}
+/* dita al posto del mouse: bersagli più grandi, niente suggerimento sulla tastiera */
+@media (pointer: coarse) {
+  button, .chips button { min-height: 40px; }
+  .hint { display: none; }
+}
