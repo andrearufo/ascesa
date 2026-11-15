@@ -1,5 +1,5 @@
 // Ascesa — interfaccia
-import { RES, JOBS, BUILDINGS, TECHS, ERAS, GROUPS, DIFFICULTY, ACHIEVEMENTS, VICTORIES } from './data.js';
+import { RES, JOBS, BUILDINGS, TECHS, ERAS, GROUPS, DIFFICULTY, ACHIEVEMENTS, VICTORIES, PERKS, TRAITS, CHALLENGES } from './data.js';
 import * as G from './engine.js';
 import { initScene } from './scene.js';
 import { EVENTS, CRISES, ENDINGS, choose, resolveCrisis } from './events.js';
@@ -159,8 +159,10 @@ function renderStats(P, r) {
   section(P, 'st', t('📊 Statistiche'), [{ k: 's', cls: 'item', html: statsHTML() }], '');
   section(P, 'leg', t('🏺 Eredità'), [{ k: 'l', cls: 'item', html: `<div class="stats"><span>${t('Punti eredità')}</span><b>${t`${L.points} (+${L.points * 3}% produzione nelle nuove partite)`}</b>
     <span>${t('Partite giocate / vinte')}</span><b>${L.runs} / ${L.wins}</b><span>${t('Era migliore')}</span><b>${L.best ? ERAS[L.best].name : '—'}</b>
-    <span>${t('Finali scoperti')}</span><b>${Object.entries(VICTORIES).map(([k, v]) => L.endings[k] ? v.icon + ' ' + v.title : '❔').join(' · ')}</b></div>
-    <p class="d">${t("Alla fine di ogni partita (vittoria o sconfitta) guadagni punti eredità in base all'era raggiunta, ai traguardi e alla difficoltà.")}</p>` }], '');
+    <span>${t('Finali scoperti')}</span><b>${Object.entries(VICTORIES).map(([k, v]) => L.endings[k] ? v.icon + ' ' + v.title : '❔').join(' · ')}</b>
+    <span>${t('Bottega')}</span><b>${Object.keys(PERKS).filter(k => L.perks[k]).map(k => `${PERKS[k].icon} ${PERKS[k].name} ${L.perks[k]}/${PERKS[k].max}`).join(' · ') || '—'}</b>
+    <span>${t('Sfide vinte')}</span><b>${Object.entries(CHALLENGES).map(([k, c]) => L.challenges[k] ? c.icon + ' ' + c.name : '❔').join(' · ')}</b></div>
+    <p class="d">${t("Alla fine di ogni partita (vittoria o sconfitta) guadagni punti eredità in base all'era raggiunta, ai traguardi e alla difficoltà.")} ${t("Si spendono nella Bottega dell'eredità quando inizi una nuova partita.")}</p>` }], '');
   const n = Object.keys(S.ach).length;
   section(P, 'ach', t`🏅 Traguardi (${n}/${Object.keys(ACHIEVEMENTS).length}) · +${n * 2}% produzione`, Object.entries(ACHIEVEMENTS).map(([k, a]) => ({ k, cls: 'item ' + (S.ach[k] ? 'ok' : 'done'), html: `<div class="t"><span>${S.ach[k] ? '🏅' : '🔒'} ${a.name}</span></div><div class="d">${a.desc}</div>` })));
 }
@@ -253,7 +255,8 @@ function closeModal() { $('modal').hidden = true; $('modal').dataset.k = ''; }
 function statsHTML() {
   const st = S.stats;
   const row = (l, v) => `<span>${t(l)}</span><b>${v}</b>`;
-  return `<div class="stats">${row('Era raggiunta', ERAS[S.era].name)}${row('Tempo di gioco', time(S.t))}${row('Popolazione massima', fmt(st.maxPop))}
+  const pickRow = (l, o) => o ? row(l, `${o.icon} ${o.name} <small class="d">${tFx(o.fx)}</small>`) : '';
+  return `<div class="stats">${pickRow('Indole', TRAITS[S.trait])}${pickRow('Sfida', CHALLENGES[S.challenge])}${row('Era raggiunta', ERAS[S.era].name)}${row('Tempo di gioco', time(S.t))}${row('Popolazione massima', fmt(st.maxPop))}
     ${row('Tecnologie scoperte', Object.keys(S.techs).length)}${row('Razzie respinte / subite', `${st.raidsWon} / ${st.raidsLost}`)}${row('Eventi vissuti', st.events)}
     ${row('Morti totali', fmt(st.died))}${row('Click', fmt(st.clicks))}</div>`;
 }
@@ -261,7 +264,7 @@ function endModal(e, won) {
   const pts = G.endRun(S, L);
   G.saveLegacy(L); G.save(S);
   modal(`<h2>${e.icon} ${e.title}</h2><p>${e.text}</p>${won ? `<p><b>${t`🏆 Hai vinto in ${time(S.t)}!`}</b></p>` : ''}${statsHTML()}
-    <p>${t`🏺 Guadagni <b>${pts}</b> punti eredità (totale ${L.points}): la prossima civiltà partirà con <b>+${L.points * 3}%</b> di produzione.`}</p>
+    <p>${t`🏺 Guadagni <b>${pts}</b> punti eredità (ne hai ${L.points}). Tienili per <b>+${L.points * 3}%</b> di produzione o spendili nella Bottega all'inizio della prossima partita.`}</p>
     <div class="actions"><button data-act="share">${t('𝕏 Condividi il risultato')}</button><button data-act="newgame">${t('Nuova partita')}</button></div>`, 'over');
   const d = DIFFICULTY[S.difficulty].name, dur = `${Math.floor(S.t / 3600)}h ${Math.floor(S.t / 60) % 60}m`;
   shareText = won ? t`🏆 Ho portato la mia civiltà dalla preistoria a «${e.title}» in ${dur} su Ascesa (${d}). Ci riesci anche tu?`
@@ -290,14 +293,28 @@ function checkModals() {
   }
 }
 
+const pick = { trait: null, ch: null }; // scelte fatte nella finestra «Nuova partita»
 function newGameModal() {
+  // tre indoli estratte a sorte: restano le stesse finché non parte una partita
+  if (L.offer?.length !== 3 || !L.offer.every(id => TRAITS[id])) { L.offer = Object.keys(TRAITS).sort(() => Math.random() - 0.5).slice(0, 3); G.saveLegacy(L); }
+  if (!L.offer.includes(pick.trait)) pick.trait = L.offer[0];
+  const top = $('modal').dataset.k === 'new' ? $('modal-box').scrollTop : 0; // ogni scelta ridisegna la finestra
+  const opt = (a, on, o, extra = '') => `<button data-act="${a}" class="${on ? 'on' : ''}">${o.icon} ${o.name}<small>${tFx(o.fx)}${extra}</small></button>`;
+  // alla prima partita niente bottega né sfide: arrivano quando c'è un'eredità da spendere
   modal(`<h2>Ascesa</h2>
-    <p>${t('Guida una piccola tribù dalla <b>preistoria</b> fino a un futuro <b>iper-tecnologico</b>. Raccogli risorse, assegna i lavori, costruisci, ricerca e compi scelte che cambieranno il destino della tua civiltà.')}</p>
-    <p>${t('Carestie, razzie, epidemie, rivolte, inquinamento, guerre nucleari e intelligenze artificiali ribelli possono distruggere tutto. Completa uno dei <b>megaprogetti</b> finali per vincere.')}</p>
-    ${L.points ? `<p>${t`🏺 Eredità delle civiltà passate: <b>${L.points}</b> punti → <b>+${L.points * 3}%</b> a tutta la produzione.`}</p>` : ''}
+    ${L.runs ? `<h3>${t("🏺 Bottega dell'eredità")}</h3>
+    <p class="d">${t`Hai <b>${L.points}</b> punti eredità. Ogni punto non speso dà +3% a tutta la produzione (ora <b>+${L.points * 3}%</b>); quelli spesi qui valgono per tutte le partite future.`}</p>
+    <div class="actions">${Object.entries(PERKS).map(([k, p]) => { const n = L.perks[k] || 0; return `<button data-act="perk:${k}" ${n >= p.max || L.points < G.perkCost(L, k) ? 'disabled' : ''}>${p.icon} ${p.name} ${n}/${p.max}<small>${tFx(p.fx)} · ${n >= p.max ? t('al massimo') : t`costa ${G.perkCost(L, k)} punti`}</small></button>`; }).join('')}</div>`
+    : `<p>${t('Guida una piccola tribù dalla <b>preistoria</b> fino a un futuro <b>iper-tecnologico</b>. Raccogli risorse, assegna i lavori, costruisci, ricerca e compi scelte che cambieranno il destino della tua civiltà.')}</p>
+    <p>${t('Carestie, razzie, epidemie, rivolte, inquinamento, guerre nucleari e intelligenze artificiali ribelli possono distruggere tutto. Completa uno dei <b>megaprogetti</b> finali per vincere.')}</p>`}
+    <h3>${t('Indole della civiltà')}</h3>
+    <div class="actions">${L.offer.map(k => opt('trait:' + k, pick.trait === k, TRAITS[k])).join('')}</div>
+    ${L.runs ? `<h3>${t('Sfida (facoltativa)')}</h3>
+    <div class="actions">${Object.entries(CHALLENGES).map(([k, c]) => opt('ch:' + k, pick.ch === k, c, ' · ' + t`punti eredità ${mul(c.pts)}` + (L.challenges[k] ? ' · 🏅' : ''))).join('')}</div>` : ''}
     <h3>${t('Scegli la difficoltà')}</h3>
     <div class="actions">${Object.entries(DIFFICULTY).map(([k, d]) => `<button data-act="start:${k}">${d.name}<small>${t`produzione ${mul(d.prod)} · eventi ${mul(d.events)} · gravità ${mul(d.severity)}`}</small></button>`).join('')}</div>
     ${S && !S.over && !S.won ? `<div class="actions"><button data-act="close">${t('Annulla')}</button></div>` : ''}`, 'new');
+  $('modal-box').scrollTop = top;
 }
 
 // ---------- azioni
@@ -327,7 +344,10 @@ function act(a, ev) {
   if (k === 'lang') { G.save(S); localStorage.setItem(LANG_KEY, x); location.reload(); }
   if (k === 'newgame') newGameModal();
   if (k === 'share') window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(GAME_URL)}`, '_blank', 'noopener');
-  if (k === 'start') { S = G.newState(x, L.points); G.log(S, t('🔥 Una piccola tribù si raduna attorno al fuoco. Assegna i lavori e sopravvivi!'), 'era'); G.save(S); closeModal(); }
+  if (k === 'perk') { G.buyPerk(L, x); G.saveLegacy(L); newGameModal(); }
+  if (k === 'trait') { pick.trait = x; newGameModal(); }
+  if (k === 'ch') { pick.ch = pick.ch === x ? null : x; newGameModal(); }
+  if (k === 'start') { S = G.newState(x, L.points, { perks: L.perks, trait: pick.trait, challenge: pick.ch }); delete L.offer; pick.ch = null; G.saveLegacy(L); G.log(S, t('🔥 Una piccola tribù si raduna attorno al fuoco. Assegna i lavori e sopravvivi!'), 'era'); G.save(S); closeModal(); }
   if (k === 'export') modal(`<h2>${t('Esporta')}</h2><p>${t('Copia questo codice per salvare la partita altrove.')}</p><textarea readonly>${btoa(unescape(encodeURIComponent(JSON.stringify(S))))}</textarea><div class="actions"><button data-act="close">${t('Chiudi')}</button></div>`);
   if (k === 'import') modal(`<h2>${t('Importa')}</h2><p>${t('Incolla un codice esportato. La partita attuale verrà sostituita.')}</p><textarea id="imp"></textarea><div class="actions"><button data-act="doimport">${t('Importa')}</button><button data-act="close">${t('Annulla')}</button></div>`);
   if (k === 'doimport') {

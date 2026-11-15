@@ -289,7 +289,36 @@ export const ACHIEVEMENTS = {
   survivor: { name: 'Sull\'orlo del baratro', desc: 'Sopravvivi a una rivolta con la stabilità a zero.', cond: s => s.stats.revoltSurvived >= 1 },
 };
 
-[ERAS, RES, JOBS, BUILDINGS, TECHS, DIFFICULTY, VICTORIES].forEach(localize);
+// ---------- rigiocabilità. Tutto passa da fx, come le tecnologie: nessuna regola nuova nel motore.
+// Bottega dell'eredità: il livello n costa cost × n punti; ogni livello applica fx un'altra volta.
+export const PERKS = {
+  hands: { icon: '✋', name: 'Mani esperte', cost: 2, max: 3, fx: { click: 2 } },
+  lineage: { icon: '🌱', name: 'Stirpe feconda', cost: 2, max: 3, fx: { growth: 1.2 } },
+  granaries: { icon: '🏺', name: 'Depositi capienti', cost: 3, max: 3, fx: { cap: 1.2 } },
+  customs: { icon: '⚖️', name: 'Tradizioni salde', cost: 3, max: 3, fx: { stab: 4 } },
+  warfare: { icon: '🛡️', name: 'Arte della guerra', cost: 3, max: 3, fx: { def: 1.25 } },
+  memory: { icon: '📜', name: 'Memoria degli antenati', cost: 4, max: 3, fx: { rm: { knowledge: 1.2 } } },
+};
+// Indole: a inizio partita se ne sceglie una fra tre estratte a sorte
+export const TRAITS = {
+  fertile: { icon: '🌾', name: 'Popolo fertile', fx: { rm: { food: 1.3 }, growth: 1.2, def: 0.8 } },
+  warlike: { icon: '⚔️', name: 'Popolo guerriero', fx: { def: 1.5, rm: { knowledge: 0.9 } } },
+  curious: { icon: '🔭', name: 'Popolo curioso', fx: { rm: { knowledge: 1.25 }, stab: -8 } },
+  merchant: { icon: '💰', name: 'Popolo mercante', fx: { rm: { gold: 1.4, food: 0.9 } } },
+  builder: { icon: '🧱', name: 'Popolo costruttore', fx: { rm: { wood: 1.3, stone: 1.3 }, cap: 1.2, growth: 0.85 } },
+  peaceful: { icon: '🕊️', name: 'Popolo pacifico', fx: { stab: 8, def: 0.75 } },
+  keeper: { icon: '🌿', name: 'Custodi della terra', fx: { pol: 0.7, rm: { metal: 0.9 } } },
+  tireless: { icon: '💪', name: 'Popolo instancabile', fx: { click: 3, foodCons: 1.1 } },
+};
+// Sfide: un handicap per tutta la partita; pts moltiplica i punti eredità a fine partita
+export const CHALLENGES = {
+  barren: { icon: '🏜️', name: 'Terra avara', fx: { rm: { all: 0.6 } }, pts: 2 },
+  restless: { icon: '😤', name: 'Popolo irrequieto', fx: { stab: -15 }, pts: 1.5 },
+  fragile: { icon: '🏭', name: 'Pianeta fragile', fx: { pol: 2 }, pts: 1.5 },
+  exposed: { icon: '🗡️', name: 'Confini aperti', fx: { def: 0.3 }, pts: 1.25 },
+};
+
+[ERAS, RES, JOBS, BUILDINGS, TECHS, DIFFICULTY, VICTORIES, PERKS, TRAITS, CHALLENGES].forEach(localize);
 for (const k in ACHIEVEMENTS) if (!/^era\d$/.test(k)) localize(ACHIEVEMENTS[k]); // quelli d'era sono già tradotti
 for (const k in GROUPS) GROUPS[k] = t(GROUPS[k]);
 if (lang === 'en') for (const [k, c] of Object.entries({ food: 'F', wood: 'W', stone: 'S', gold: 'G' })) RES[k].key = c; // tasti per risorsa

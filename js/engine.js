@@ -1,5 +1,5 @@
 // Ascesa — motore di gioco (nessun accesso al DOM: gira anche in node per i test)
-import { RES, JOBS, BUILDINGS, TECHS, ERAS, ACHIEVEMENTS, DIFFICULTY, VICTORIES } from './data.js';
+import { RES, JOBS, BUILDINGS, TECHS, ERAS, ACHIEVEMENTS, DIFFICULTY, VICTORIES, PERKS, TRAITS, CHALLENGES } from './data.js';
 import { runEvents, EVENTS, CRISES, ENDINGS } from './events.js';
 import { t, t as tr } from './i18n.js';
 
@@ -10,9 +10,11 @@ const FOOD_PER_POP = 0.25, IDLE_FOOD = 0.15, BASE_HOUSING = 5;
 const keys = o => Object.keys(o);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-export function newState(difficulty = 'normal', legacy = 0) {
+// o: { perks, trait, challenge } scelti a inizio partita
+export function newState(difficulty = 'normal', legacy = 0, o = {}) {
   return {
     v: 1, t: 0, difficulty, era: 1, eraStart: 0, legacy,
+    perks: { ...o.perks }, trait: o.trait || null, challenge: o.challenge || null,
     res: { ...Object.fromEntries(keys(RES).map(r => [r, 0])), food: 40, wood: 10 },
     pop: 3, growthAcc: 0, starveAcc: 0,
     jobs: { ...Object.fromEntries(keys(JOBS).map(j => [j, 0])), forager: 2 },
@@ -48,6 +50,8 @@ export function mods(s) {
   };
   for (const id in s.techs) apply(TECHS[id].fx || {});
   for (const e of s.temp) apply(e.fx || {});
+  for (const id in s.perks) for (let i = 0; i < s.perks[id]; i++) apply(PERKS[id].fx);
+  apply(TRAITS[s.trait]?.fx || {}); apply(CHALLENGES[s.challenge]?.fx || {});
   m.rm.all = (m.rm.all ?? 1) * DIFFICULTY[s.difficulty].prod * (1 + 0.03 * s.legacy) * (1 + 0.02 * keys(s.ach).length);
   return m;
 }
@@ -331,10 +335,10 @@ export function offline(s) {
 export function endRun(s, L) {
   if (s.legacyAwarded) return s.legacyPts;
   s.legacyAwarded = true;
-  const k = { easy: 0.5, normal: 1, hard: 1.5 }[s.difficulty];
+  const k = { easy: 0.5, normal: 1, hard: 1.5 }[s.difficulty] * (CHALLENGES[s.challenge]?.pts ?? 1);
   const pts = Math.max(1, Math.round(((s.era - 1) * 2 + (s.won ? 15 : 0) + Object.keys(s.ach).length * 0.25) * k));
   L.points += pts; L.runs++; L.best = Math.max(L.best, s.era);
-  if (s.won) { L.wins++; L.endings[s.won.id] = 1; }
+  if (s.won) { L.wins++; L.endings[s.won.id] = 1; if (s.challenge) L.challenges[s.challenge] = 1; }
   return (s.legacyPts = pts);
 }
 
@@ -367,11 +371,22 @@ export function load(store = globalThis.localStorage) {
     if (!VICTORIES[s.won?.id]) s.won = null;
     if (!ERAS[s.eraUp]) s.eraUp = null;
     if (!RES[s.clickTarget]) s.clickTarget = 'food';
+    s.perks = Object.fromEntries(keys(PERKS).map(id => [id, clamp(Math.floor(+d.perks?.[id] || 0), 0, PERKS[id].max)]));
+    if (!TRAITS[s.trait]) s.trait = null;
+    if (!CHALLENGES[s.challenge]) s.challenge = null;
     return s;
   } catch { return null; }
 }
+// points: punti non spesi (+3% di produzione l'uno); perks: livelli comprati nella bottega
+const L0 = () => ({ points: 0, runs: 0, wins: 0, best: 0, endings: {}, perks: {}, challenges: {} });
 export function loadLegacy(store = globalThis.localStorage) {
-  try { return { points: 0, runs: 0, wins: 0, best: 0, endings: {}, ...JSON.parse(store.getItem(LEGACY_KEY)) }; }
-  catch { return { points: 0, runs: 0, wins: 0, best: 0, endings: {} }; }
+  try { return { ...L0(), ...JSON.parse(store.getItem(LEGACY_KEY)) }; }
+  catch { return L0(); }
+}
+export const perkCost = (L, id) => PERKS[id].cost * ((L.perks[id] || 0) + 1);
+export function buyPerk(L, id) {
+  if (!PERKS[id] || (L.perks[id] || 0) >= PERKS[id].max || L.points < perkCost(L, id)) return false;
+  L.points -= perkCost(L, id); L.perks[id] = (L.perks[id] || 0) + 1;
+  return true;
 }
 export const saveLegacy = (L, store = globalThis.localStorage) => store.setItem(LEGACY_KEY, JSON.stringify(L));

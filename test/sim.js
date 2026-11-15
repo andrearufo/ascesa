@@ -1,8 +1,9 @@
 // Controllo dati + bot greedy che gioca una partita intera. Uso: node test/sim.js [partite] [difficoltà]
+// TRAIT=curious CH=barren PERKS=1 giocano con indole, sfida e bottega al livello 1.
 // SAVE=file.txt riparte da un salvataggio esportato dal gioco (📤 Esporta).
 import assert from 'node:assert';
 import fs from 'node:fs';
-import { RES, JOBS, BUILDINGS, TECHS, ACHIEVEMENTS } from '../js/data.js';
+import { RES, JOBS, BUILDINGS, TECHS, ACHIEVEMENTS, PERKS, TRAITS, CHALLENGES } from '../js/data.js';
 import * as G from '../js/engine.js';
 import { CRISES, EVENTS, choose, resolveCrisis, threat } from '../js/events.js';
 
@@ -11,6 +12,15 @@ for (const [id, t] of Object.entries(TECHS)) for (const q of t.req || []) assert
 for (const [id, b] of Object.entries(BUILDINGS)) { assert(!b.req || TECHS[b.req], `${id}: req ${b.req}`); for (const k in b.cost) assert(RES[k], `${id}: cost ${k}`); }
 for (const [id, j] of Object.entries(JOBS)) assert(!j.req || TECHS[j.req], `${id}: req`);
 for (const [id, e] of Object.entries(EVENTS)) assert(e.run || e.options?.[e.safe], `${id}: serve run oppure options con safe valido`);
+for (const o of [PERKS, TRAITS, CHALLENGES]) for (const [id, x] of Object.entries(o)) assert(Object.keys(x.fx).every(k => k in G.mods(G.newState())), `${id}: fx sconosciuto`);
+{ // bottega: si paga cost × livello, mai oltre il massimo né a credito
+  const L = G.loadLegacy({ getItem: () => '{"points":13}' });
+  assert(G.buyPerk(L, 'hands') && G.buyPerk(L, 'hands') && G.buyPerk(L, 'hands') && L.points === 1 && !G.buyPerk(L, 'hands') && !G.buyPerk(L, 'memory'));
+  assert(G.mods(G.newState('normal', 0, { perks: L.perks })).click === 8);
+  // sfida: moltiplica i punti e, se vinta, resta segnata
+  const s = G.newState('normal', 0, { challenge: 'barren' }); s.won = { id: 'dyson' };
+  assert(G.endRun(s, L) === 15 * CHALLENGES.barren.pts && L.challenges.barren && L.wins === 1);
+}
 console.log(`dati ok: ${Object.keys(TECHS).length} tecnologie, ${Object.keys(BUILDINGS).length} edifici, ${Object.keys(EVENTS).length} eventi, ${Object.keys(ACHIEVEMENTS).length} traguardi`);
 
 const m = t => `${Math.round(t / 60)}m`;
@@ -68,7 +78,7 @@ function shop(s) {
 
 function play(diff, seed) {
   const raw = process.env.SAVE && decodeURIComponent(escape(atob(fs.readFileSync(process.env.SAVE, 'utf8').trim())));
-  const s = raw ? G.load({ getItem: () => raw }) : G.newState(diff), eras = {}, wait = {};
+  const s = raw ? G.load({ getItem: () => raw }) : G.newState(diff, 0, { trait: process.env.TRAIT, challenge: process.env.CH, perks: process.env.PERKS ? Object.fromEntries(Object.keys(PERKS).map(k => [k, +process.env.PERKS])) : {} }), eras = {}, wait = {};
   let ch = 0; const short = {};
   for (let t = 0; t < 10 * 3600 && !s.over && !s.won; t++) {
     if (s.choice) { choose(s, (ch++ + seed) % EVENTS[s.choice.id].options.length, G.calc(s)); continue; }
