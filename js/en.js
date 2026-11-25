@@ -784,4 +784,7 @@ export default {
   "↩️ La storia si riavvolge: si riparte dall'inizio dell'era.": "↩️ History rewinds: back to the start of the era.",
   "🏺 Questa partita vale <b>{0}</b> punti eredità: li incassi iniziando una nuova partita. Oppure riparti dall'inizio dell'era e riprova.": "🏺 This game is worth <b>{0}</b> legacy points: you collect them by starting a new game. Or go back to the start of the era and try again.",
   "↩️ Riparti da: {0}": "↩️ Restart from: {0}",
+  // gerenza
+  "Un gioco di": "A game by",
+  "Codice sorgente": "Source code",
 };

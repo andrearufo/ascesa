@@ -73,6 +73,8 @@ If you enjoyed it, a ⭐ helps other people find the game.
 
 [MIT](LICENSE): play it, fork it, mod it.
 
+Made by [Andrea Rufo](https://rufo.dev) · [GitHub](https://github.com/andrearufo)
+
 ---
 
 <details>

@@ -24,7 +24,7 @@ for (const f of ['engine', 'events', 'ui', 'data'].map(n => `js/${n}.js`)) {
     if (EN[k] === undefined) missing.add(k);
   }
 }
-for (const m of fs.readFileSync('index.html', 'utf8').matchAll(/data-t>(.*?)<\/(button|p|h3)>/g)) if (EN[m[1]] === undefined) missing.add(m[1]);
+for (const m of fs.readFileSync('index.html', 'utf8').matchAll(/data-t>(.*?)<\/(button|p|h3|span)>/g)) if (EN[m[1]] === undefined) missing.add(m[1]);
 if (EN['Ascesa — dalla pietra alle stelle'] === undefined) missing.add('Ascesa — dalla pietra alle stelle');
 // testi degli effetti temporanei (tradotti alla visualizzazione)
 for (const m of fs.readFileSync('js/events.js', 'utf8').matchAll(/addTemp\(s, '[^']*', (['"])((?:\\.|(?!\1).)*)\1/g)) if (EN[m[2]] === undefined) missing.add(m[2]);
